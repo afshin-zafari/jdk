@@ -23,7 +23,6 @@
 package nsk.share.jpda;
 
 import java.io.IOException;
-import java.lang.ref.Cleaner;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import nsk.share.*;

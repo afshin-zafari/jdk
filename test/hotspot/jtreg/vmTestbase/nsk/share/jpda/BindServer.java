@@ -24,7 +24,6 @@
 package nsk.share.jpda;
 
 import java.io.*;
-import java.lang.ref.Cleaner;
 import java.net.*;
 import java.util.*;
 
@@ -405,9 +404,6 @@ public class BindServer implements Finalizable {
     /**
      * Make finalization of <code>BindServer</code> object by invoking
      * method <code>close()</code>.
-     *
-     * This is replacement of the deprecated finalize() and is called
-     * when this instance becomes unreachable.
      *
      * @see #close()
      */

@@ -27,7 +27,7 @@ import java.lang.ref.Cleaner;
 /**
  * Finalizable interface allows <tt>Finalizer</tt> to perform finalization of an object.
  * Each object that requires finalization at VM shutdown time should implement this
- * interface and call the <tt>registerClenup</tt> to activate a <tt>Finalizer</tt> hook.
+ * interface and call the <tt>registerCleanup</tt> to activate a <tt>Finalizer</tt> hook.
  *
  * @see Finalizer
  */
@@ -57,11 +57,9 @@ public interface Finalizable {
      * @see Finalizer
      */
     default public void registerCleanup() {
-       // install finalizer to print errors summary at exit
        Finalizer finalizer = new Finalizer(this);
        finalizer.activate();
 
-       // register the cleanup method to be called when this Log instance becomes unreachable.
        Cleaner.create().register(this, () -> cleanup());
     }
 }

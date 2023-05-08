@@ -86,9 +86,8 @@ abstract public class DebugeeProcess extends FinalizableObject {
         this.binder = binder;
         this.log = binder.getLog();
 
-        // As the alternative to finalize(), register the cleanup() method
-        // to be called when this instance becomes unreachable.
-        Cleaner.create().register(this, () -> cleanup());
+        // Register the cleanup() method to be called when this instance becomes unreachable.
+        registerCleanup();
     }
 
     /**

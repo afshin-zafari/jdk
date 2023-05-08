@@ -25,18 +25,16 @@ package nsk.share;
 
 
 /**
- * This class is an simple exalmple of finalizable object, that implements interface
- * <code>Finalizable</code>.
+ * This class is an simple exalmple of finalizable object, that
+ * implements interface <code>Finalizable</code>.
  *
  * @see Finalizable
  * @see Finalizer
  */
 public class FinalizableObject implements Finalizable {
     /**
-     * All instances of this class, should implement their own cleanup method
-     * to clean appropriately the objects they used.
+     * Subclasses should override this method to provide the specific
+     * cleanup actions that they need.
      */
     public void cleanup() {}
-
-
 }

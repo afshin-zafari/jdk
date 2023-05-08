@@ -557,9 +557,6 @@ public class DebugeeBinder extends Log.Logger implements Finalizable {
     /**
      * Finalize binder by invoking <code>close()</code>.
      *
-     * This is replacement of the finalize() method and is called when this
-     * instance becomes unreachable.
-     *
      */
     public void cleanup() {
         close();
