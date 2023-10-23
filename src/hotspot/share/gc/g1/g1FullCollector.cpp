@@ -256,7 +256,9 @@ void G1FullCollector::complete_collection() {
 void G1FullCollector::before_marking_update_attribute_table(HeapRegion* hr) {
   if (hr->is_free()) {
     _region_attr_table.set_free(hr->hrm_index());
-  } else if (hr->is_pinned()) {
+  } else if (hr->is_humongous()) {
+    // Humongous objects will never be moved in the "main" compaction phase, but
+    // afterwards in a special phase if needed.
     _region_attr_table.set_skip_compacting(hr->hrm_index());
   } else {
     // Everything else should be compacted.
@@ -317,13 +319,19 @@ void G1FullCollector::phase1_mark_live_objects() {
   // Class unloading and cleanup.
   if (ClassUnloading) {
     GCTraceTime(Debug, gc, phases) debug("Phase 1: Class Unloading and Cleanup", scope()->timer());
-    CodeCache::UnloadingScope unloading_scope(&_is_alive);
-    // Unload classes and purge the SystemDictionary.
-    bool purged_class = SystemDictionary::do_unloading(scope()->timer());
-    _heap->complete_cleaning(purged_class);
+    {
+      CodeCache::UnlinkingScope unloading_scope(&_is_alive);
+      // Unload classes and purge the SystemDictionary.
+      bool unloading_occurred = SystemDictionary::do_unloading(scope()->timer());
+      _heap->complete_cleaning(unloading_occurred);
+    }
+    CodeCache::flush_unlinked_nmethods();
   }
 
-  scope()->tracer()->report_object_count_after_gc(&_is_alive);
+  {
+    GCTraceTime(Debug, gc, phases) debug("Report Object Count", scope()->timer());
+    scope()->tracer()->report_object_count_after_gc(&_is_alive, _heap->workers());
+  }
 #if TASKQUEUE_STATS
   oop_queue_set()->print_and_reset_taskqueue_stats("Oop Queue");
   array_queue_set()->print_and_reset_taskqueue_stats("ObjArrayOop Queue");
