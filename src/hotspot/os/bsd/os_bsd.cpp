@@ -1776,7 +1776,7 @@ void os::large_page_init() {
 }
 
 
-char* os::pd_reserve_memory_special(size_t bytes, size_t alignment, size_t page_size, char* req_addr, bool exec) {
+char* os::pd_reserve_memory_special(size_t bytes, size_t alignment, size_t page_size, char* req_addr, MEMFLAGS mt_flag, bool exec) {
   fatal("os::reserve_memory_special should not be called on BSD.");
   return nullptr;
 }
@@ -2316,7 +2316,7 @@ jlong os::seek_to_file_offset(int fd, jlong offset) {
 
 // Map a block of memory.
 char* os::pd_map_memory(int fd, const char* file_name, size_t file_offset,
-                        char *addr, size_t bytes, bool read_only,
+                        char *addr, size_t bytes, MEMFLAGS mt_flag, bool read_only,
                         bool allow_exec) {
   int prot;
   int flags;

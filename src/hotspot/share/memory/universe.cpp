@@ -876,7 +876,7 @@ ReservedHeapSpace Universe::reserve_heap(size_t heap_size, size_t alignment) {
   }
 
   // Now create the space.
-  ReservedHeapSpace total_rs(total_reserved, alignment, page_size, AllocateHeapAt);
+  ReservedHeapSpace total_rs(total_reserved, alignment, page_size, mtJavaHeap, AllocateHeapAt);
 
   if (total_rs.is_reserved()) {
     assert((total_reserved == total_rs.size()) && ((uintptr_t)total_rs.base() % alignment == 0),
@@ -902,7 +902,7 @@ ReservedHeapSpace Universe::reserve_heap(size_t heap_size, size_t alignment) {
 
   // satisfy compiler
   ShouldNotReachHere();
-  return ReservedHeapSpace(0, 0, os::vm_page_size());
+  return ReservedHeapSpace(0, 0, os::vm_page_size(), mtNone);
 }
 
 OopStorage* Universe::vm_weak() {

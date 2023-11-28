@@ -55,7 +55,7 @@ typedef BOOL (WINAPI *SetSecurityDescriptorControlFnPtr)(
 static char* create_standard_memory(size_t size) {
 
   // allocate an aligned chuck of memory
-  char* mapAddress = os::reserve_memory(size, mtIternal);
+  char* mapAddress = os::reserve_memory(size, mtInternal);
 
   if (mapAddress == nullptr) {
     return nullptr;

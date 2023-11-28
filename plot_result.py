@@ -3,6 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import sys
 def do_plot(r, s, l):
   plt.style.use('dark_background')
 
@@ -19,10 +20,10 @@ def do_plot(r, s, l):
   plt.ylabel("% over NMT Off")
   plt.title(f"Comparison of overhead of \nSummary and Light mode \nwith NMT Off (Regions={r} per thread)")
   plt.legend()
-  plt.savefig(f'{r}_plot.png')
+  plt.savefig(f'{r}_plot_{sys.argv[1]}.png')
   plt.close('all')
 
-df = pd.read_csv("BenchmarkResults.txt", sep = '\s+')
+df = pd.read_csv(f"BenchmarkResults_{sys.argv[1]}.txt", sep = '\s+')
 for r in [100, 200, 400]:
   ys = list()
   yl = list()
@@ -44,5 +45,3 @@ for r in [100, 200, 400]:
     yl.append(l_percent)
     print(f"{t}, {r}, {s_percent:5.4}%, {l_percent:5.4}%")
   do_plot(r, ys, yl)
-import readline
-readline.write_history_file('history')

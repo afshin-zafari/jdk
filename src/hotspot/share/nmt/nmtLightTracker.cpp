@@ -22,6 +22,7 @@
  *
  */
 
+#include "precompiled.hpp"
 #include "nmt/nmtLightTracker.hpp"
 
  NMTLightTracker::NMTSummary NMTLightTracker::_summary[(unsigned)MEMFLAGS::mt_number_of_types];
@@ -29,45 +30,4 @@
 
 void NMTLightTracker::initialize() {
 
-}
-void NMTLightTracker::make_summary(const NMTRecord& rec) {
-  if (rec.arena) {
-    if (rec._new) {
-      Atomic::inc(&_summary[rec.flag].arena.count);
-      Atomic::add(&_summary[rec.flag].arena.size, rec.size);
-    }
-    if (rec._free || rec.resize) {
-      Atomic::dec(&_summary[rec.flag].arena.count);
-      Atomic::sub(&_summary[rec.flag].arena.size, rec.size);
-    }
-    return;
-  }
-  if (rec.malloc) {
-    if (rec._new) {
-      Atomic::inc(&_summary[rec.flag].malloc.count);
-      Atomic::add(&_summary[rec.flag].malloc.size, rec.size);
-    }
-    if (rec._free) {
-      Atomic::dec(&_summary[rec.flag].malloc.count);
-      Atomic::sub(&_summary[rec.flag].malloc.size, rec.size);
-    }
-    return;
-  }
-  if (rec.commit) {
-    Atomic::add(&_summary[rec.flag].commit, rec.size);
-    return;
-  }
-  if (rec.uncommit) {
-    if (_summary[rec.flag].commit >= rec.size)
-      Atomic::sub(&_summary[rec.flag].commit, rec.size);
-    return;
-  }
-  if (rec.reserve) {
-    Atomic::add(&_summary[rec.flag].reserve, rec.size);
-    return;
-  }
-  if (rec.release) {
-    if (_summary[rec.flag].reserve >= rec.size)
-      Atomic::sub(&_summary[rec.flag].reserve, rec.size);
-  }
 }

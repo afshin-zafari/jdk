@@ -586,13 +586,14 @@ ReservedSpace Metaspace::reserve_address_space_for_compressed_classes(size_t siz
   if (try_in_low_address_ranges) {
     constexpr uintptr_t unscaled_max = ((uintptr_t)UINT_MAX + 1);
     log_debug(metaspace, map)("Trying below " SIZE_FORMAT_X " for unscaled narrow Klass encoding", unscaled_max);
+    MEMFLAGS mf = MemTracker::is_light_mode() ? mtMetaspace : mtNone;
     result = os::attempt_reserve_memory_between(nullptr, (char*)unscaled_max,
-                                                size, Metaspace::reserve_alignment(), randomize, mtMetaspace);
+                                                size, Metaspace::reserve_alignment(), randomize, mf);
     if (result == nullptr) {
       constexpr uintptr_t zerobased_max = unscaled_max << LogKlassAlignmentInBytes;
       log_debug(metaspace, map)("Trying below " SIZE_FORMAT_X " for zero-based narrow Klass encoding", zerobased_max);
       result = os::attempt_reserve_memory_between((char*)unscaled_max, (char*)zerobased_max,
-                                                  size, Metaspace::reserve_alignment(), randomize, mtMetaspace);
+                                                  size, Metaspace::reserve_alignment(), randomize, mf);
     }
   } // end: low-address reservation
 
@@ -619,14 +620,16 @@ ReservedSpace Metaspace::reserve_address_space_for_compressed_classes(size_t siz
 
     log_debug(metaspace, map)("Trying between " UINT64_FORMAT_X " and " UINT64_FORMAT_X
                               " with " SIZE_FORMAT_X " alignment", min, max, alignment);
-    result = os::attempt_reserve_memory_between((char*)min, (char*)max, size, alignment, randomize, _mt_flag);
+    MEMFLAGS mf = MemTracker::is_light_mode() ? mtMetaspace : mtNone;
+    result = os::attempt_reserve_memory_between((char*)min, (char*)max, size, alignment, randomize, mf);
   }
 #endif // defined(AARCH64) || defined(PPC64) || defined(S390)
 
   if (result == nullptr) {
     // Fallback: reserve anywhere and hope the resulting block is usable.
     log_debug(metaspace, map)("Trying anywhere...");
-    result = os::reserve_memory_aligned(size, Metaspace::reserve_alignment(), mtMetaspace, false);
+    MEMFLAGS mf = MemTracker::is_light_mode() ? mtMetaspace : mtNone;
+    result = os::reserve_memory_aligned(size, Metaspace::reserve_alignment(), mf, false);
   }
 
   // Wrap resulting range in ReservedSpace
@@ -773,8 +776,9 @@ void Metaspace::global_initialize() {
                     "(must be aligned to " SIZE_FORMAT_X ").",
                     CompressedClassSpaceBaseAddress, Metaspace::reserve_alignment()));
       }
+      MEMFLAGS mf = MemTracker::is_light_mode() ? mtMetaspace : mtNone;
       rs = ReservedSpace(size, Metaspace::reserve_alignment(),
-                         os::vm_page_size() /* large */, mtMetaspace, (char*)base);
+                         os::vm_page_size() /* large */, mf, (char*)base);
       if (rs.is_reserved()) {
         log_info(metaspace)("Successfully forced class space address to " PTR_FORMAT, p2i(base));
       } else {

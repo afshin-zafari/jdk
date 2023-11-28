@@ -91,6 +91,10 @@ class MemoryCounter {
   inline size_t peak_size() const {
     return Atomic::load(&_peak_size);
   }
+  inline void set_peak_size_and_count(size_t size, size_t count) {
+    Atomic::store(&_peak_size, size);
+    Atomic::store(&_peak_count, count);
+  }
 };
 
 /*
@@ -99,7 +103,6 @@ class MemoryCounter {
  * call and arena's backing memory.
  */
 class MallocMemory {
-  friend class NMTLightTracker;
  private:
   MemoryCounter _malloc;
   MemoryCounter _arena;

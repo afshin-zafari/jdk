@@ -3968,7 +3968,7 @@ static char* reserve_memory_special_huge_tlbfs(size_t bytes,
 }
 
 char* os::pd_reserve_memory_special(size_t bytes, size_t alignment, size_t page_size,
-                                    char* req_addr, bool exec) {
+                                    char* req_addr, MEMFLAGS mt_flag, bool exec) {
   assert(UseLargePages, "only for large pages");
 
   char* const addr = reserve_memory_special_huge_tlbfs(bytes, alignment, page_size, req_addr, exec);
@@ -4912,8 +4912,8 @@ jlong os::seek_to_file_offset(int fd, jlong offset) {
 
 // Map a block of memory.
 char* os::pd_map_memory(int fd, const char* file_name, size_t file_offset,
-                        char *addr, size_t bytes, bool read_only,
-                        bool allow_exec) {
+                        char *addr, size_t bytes, MEMFLAGS mt_flag,
+                        bool read_only, bool allow_exec) {
   int prot;
   int flags = MAP_PRIVATE;
 

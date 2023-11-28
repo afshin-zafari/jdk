@@ -279,7 +279,7 @@ WB_END
 
 WB_ENTRY(void, WB_ReadFromNoaccessArea(JNIEnv* env, jobject o))
   size_t granularity = os::vm_allocation_granularity();
-  ReservedHeapSpace rhs(100 * granularity, granularity, os::vm_page_size());
+  ReservedHeapSpace rhs(100 * granularity, granularity, os::vm_page_size(), mtTest);
   VirtualSpace vs(mtTest);
   vs.initialize(rhs, 50 * granularity);
 
@@ -306,7 +306,7 @@ WB_END
 static jint wb_stress_virtual_space_resize(size_t reserved_space_size,
                                            size_t magnitude, size_t iterations) {
   size_t granularity = os::vm_allocation_granularity();
-  ReservedHeapSpace rhs(reserved_space_size * granularity, granularity, os::vm_page_size());
+  ReservedHeapSpace rhs(reserved_space_size * granularity, granularity, os::vm_page_size(), mtTest);
   VirtualSpace vs(mtTest);
   if (!vs.initialize(rhs, 0)) {
     tty->print_cr("Failed to initialize VirtualSpace. Can't proceed.");

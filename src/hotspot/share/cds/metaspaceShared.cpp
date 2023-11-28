@@ -265,7 +265,8 @@ void MetaspaceShared::initialize_for_static_dump() {
   SharedBaseAddress = (size_t)_requested_base_address;
 
   size_t symbol_rs_size = LP64_ONLY(3 * G) NOT_LP64(128 * M);
-  _symbol_rs = ReservedSpace(symbol_rs_size, mtSymbol);
+  MEMFLAGS mf = MemTracker::is_light_mode() ? mtSymbol : mtNone;
+  _symbol_rs = ReservedSpace(symbol_rs_size, mf);
   if (!_symbol_rs.is_reserved()) {
     log_error(cds)("Unable to reserve memory for symbols: " SIZE_FORMAT " bytes.", symbol_rs_size);
     MetaspaceShared::unrecoverable_writing_error();
@@ -1267,10 +1268,11 @@ char* MetaspaceShared::reserve_address_space_for_archives(FileMapInfo* static_ma
   }
 
   if (!Metaspace::using_class_space()) {
+    MEMFLAGS mf = MemTracker::is_light_mode() ? mtClassShared : mtNone;
     // Get the simple case out of the way first:
     // no compressed class space, simple allocation.
     archive_space_rs = ReservedSpace(archive_space_size, archive_space_alignment,
-                                     os::vm_page_size(), mtClassShared, (char*)base_address);
+                                     os::vm_page_size(), mf, (char*)base_address);
     if (archive_space_rs.is_reserved()) {
       assert(base_address == nullptr ||
              (address)archive_space_rs.base() == base_address, "Sanity");
@@ -1318,10 +1320,12 @@ char* MetaspaceShared::reserve_address_space_for_archives(FileMapInfo* static_ma
       // caller will not split the combined space for mapping, instead read the archive data
       // via sequential file IO.
       address ccs_base = base_address + archive_space_size + gap_size;
+      MEMFLAGS mfcs = MemTracker::is_light_mode() ? mtClassShared : mtNone;
+      MEMFLAGS mfc = MemTracker::is_light_mode() ? mtClass : mtNone;
       archive_space_rs = ReservedSpace(archive_space_size, archive_space_alignment,
-                                       os::vm_page_size(), mtClassShared, (char*)base_address);
+                                       os::vm_page_size(), mfcs, (char*)base_address);
       class_space_rs   = ReservedSpace(class_space_size, class_space_alignment,
-                                       os::vm_page_size(), mtClass, (char*)ccs_base);
+                                       os::vm_page_size(), mfc, (char*)ccs_base);
     }
     if (!archive_space_rs.is_reserved() || !class_space_rs.is_reserved()) {
       release_reserved_spaces(total_space_rs, archive_space_rs, class_space_rs);
@@ -1350,12 +1354,23 @@ char* MetaspaceShared::reserve_address_space_for_archives(FileMapInfo* static_ma
     assert(is_aligned(total_space_rs.base(), archive_space_alignment), "Sanity");
     assert(total_space_rs.size() == total_range_size, "Sanity");
     assert(CompressedKlassPointers::is_valid_base((address)total_space_rs.base()), "Sanity");
+    MEMFLAGS mfcs = MemTracker::is_light_mode() ? mtClassShared : mtNone;
+    MEMFLAGS mfc = MemTracker::is_light_mode() ? mtClass : mtNone;
 
     // Now split up the space into ccs and cds archive. For simplicity, just leave
     //  the gap reserved at the end of the archive space. Do not do real splitting.
     archive_space_rs = total_space_rs.first_part(ccs_begin_offset,
-                                                 (size_t)archive_space_alignment, mtClassShared);
-    class_space_rs = total_space_rs.last_part(ccs_begin_offset, mtClass);
+                                                 (size_t)archive_space_alignment, mfcs);
+    class_space_rs = total_space_rs.last_part(ccs_begin_offset, mfc);
+    log_debug(nmt)("split-reserve, base:" INTPTR_FORMAT " end:" INTPTR_FORMAT " split: "
+                   INTPTR_FORMAT ", 1st part: %s, 2nd part: %s, size:" SIZE_FORMAT_X " split size: " SIZE_FORMAT_X,
+                   p2i(total_space_rs.base()),
+                   p2i(total_space_rs.base() + total_space_rs.size()),
+                   p2i(total_space_rs.base() + + total_space_rs.size() - ccs_begin_offset),
+                   NMTUtil::flag_to_name(mfcs),
+                   NMTUtil::flag_to_name(mfc),
+                   total_space_rs.size(),
+                   ccs_begin_offset);
     MemTracker::record_virtual_memory_split_reserved(total_space_rs.base(), total_space_rs.size(),
                                                      ccs_begin_offset);
   }

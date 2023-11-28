@@ -51,6 +51,7 @@ public class NMTJavaHeapTest {
           Asserts.assertNotNull(committed, "Couldn't find pattern '" + pattern
                   + "': in output '" + output.getOutput() + "'");
 
+          System.out.println(output.getOutput());
           long committedBytes = committedStringToBytes(committed);
 
           // Must be more than zero

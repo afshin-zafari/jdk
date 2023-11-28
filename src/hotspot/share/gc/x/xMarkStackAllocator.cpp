@@ -88,6 +88,7 @@ size_t XMarkStackSpace::expand_space() {
                          old_size / M, new_size / M);
 
   // Expand
+  log_debug(nmt)("x expand space");
   os::commit_memory_or_exit((char*)_end, expand_size, mtGC, false /* executable */, "Mark stack space");
 
   return expand_size;

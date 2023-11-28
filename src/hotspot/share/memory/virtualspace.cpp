@@ -184,14 +184,14 @@ static char* reserve_memory(char* requested_address, const size_t size,
 }
 
 static char* reserve_memory_special(char* requested_address, const size_t size,
-                                    const size_t alignment, const size_t page_size, bool exec) {
+                                    const size_t alignment, const size_t page_size, MEMFLAGS mt_flag, bool exec) {
 
   log_trace(pagesize)("Attempt special mapping: size: " SIZE_FORMAT "%s, "
                       "alignment: " SIZE_FORMAT "%s",
                       byte_size_in_exact_unit(size), exact_unit_for_byte_size(size),
                       byte_size_in_exact_unit(alignment), exact_unit_for_byte_size(alignment));
 
-  char* base = os::reserve_memory_special(size, alignment, page_size, requested_address, exec);
+  char* base = os::reserve_memory_special(size, alignment, page_size, requested_address, mt_flag, exec);
   if (base != nullptr) {
     // Check alignment constraints.
     assert(is_aligned(base, alignment),
@@ -251,7 +251,8 @@ void ReservedSpace::reserve(size_t size,
     // explicit large pages and these have to be committed up front to ensure
     // no reservations are lost.
     do {
-      char* base = reserve_memory_special(requested_address, size, alignment, page_size, executable);
+      log_debug(nmt)("mtFlag %d", (int)_mt_flag);
+      char* base = reserve_memory_special(requested_address, size, alignment, page_size, _mt_flag, executable);
       if (base != nullptr) {
         // Successful reservation using large pages.
         initialize_members(base, size, alignment, page_size, true, executable);
@@ -604,8 +605,8 @@ void ReservedHeapSpace::initialize_compressed_heap(const size_t size, size_t ali
   }
 }
 
-ReservedHeapSpace::ReservedHeapSpace(size_t size, size_t alignment, size_t page_size, const char* heap_allocation_directory) : ReservedSpace() {
-  _mt_flag = mtJavaHeap;
+ReservedHeapSpace::ReservedHeapSpace(size_t size, size_t alignment, size_t page_size, MEMFLAGS flag, const char* heap_allocation_directory) : ReservedSpace() {
+  _mt_flag = flag;
   if (size == 0) {
     return;
   }
@@ -645,7 +646,12 @@ ReservedHeapSpace::ReservedHeapSpace(size_t size, size_t alignment, size_t page_
          "area must be distinguishable from marks for mark-sweep");
 
   if (base() != nullptr) {
-    MemTracker::record_virtual_memory_type((address)base(), size, mtJavaHeap);
+    if (MemTracker::is_light_mode()) {
+      log_debug(nmt)("commit, " INTPTR_FORMAT ", %s, " SIZE_FORMAT, p2i(base()), NMTUtil::flag_to_name(mtJavaHeap), size);
+      NMTLightTracker::record_virtual_memory_commit(size, mtJavaHeap);
+    } else {
+      MemTracker::record_virtual_memory_type((address)base(), size, mtJavaHeap);
+    }
   }
 
   if (_fd_for_heap != -1) {

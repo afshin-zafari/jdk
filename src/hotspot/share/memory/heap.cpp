@@ -229,8 +229,9 @@ bool CodeHeap::reserve(ReservedSpace rs, size_t committed_size, size_t segment_s
   const size_t reserved_segments_size = align_up(_number_of_reserved_segments, reserved_segments_alignment);
   const size_t committed_segments_size = align_to_page_size(_number_of_committed_segments);
 
+  MEMFLAGS mf = MemTracker::is_light_mode() ? mtCode : mtNone;
   // reserve space for _segmap
-  ReservedSpace seg_rs(reserved_segments_size, mtCode);
+  ReservedSpace seg_rs(reserved_segments_size, mf);
   if (!_segmap.initialize(seg_rs, committed_segments_size)) {
     return false;
   }

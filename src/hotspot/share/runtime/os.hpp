@@ -215,7 +215,7 @@ class os: AllStatic {
   static char*  pd_attempt_map_memory_to_file_at(char* addr, size_t bytes, int file_desc, MEMFLAGS mt_flag);
 
   static char*  pd_map_memory(int fd, const char* file_name, size_t file_offset,
-                           char *addr, size_t bytes, bool read_only = false,
+                           char *addr, size_t bytes, MEMFLAGS flag, bool read_only = false,
                            bool allow_exec = false);
   static char*  pd_remap_memory(int fd, const char* file_name, size_t file_offset,
                              char *addr, size_t bytes, bool read_only,
@@ -225,8 +225,7 @@ class os: AllStatic {
   static void   pd_realign_memory(char *addr, size_t bytes, size_t alignment_hint);
 
   static char*  pd_reserve_memory_special(size_t size, size_t alignment, size_t page_size,
-
-                                          char* addr, bool executable);
+                                          char* addr, MEMFLAGS mt_flag, bool executable);
   static bool   pd_release_memory_special(char* addr, size_t bytes);
 
   static size_t page_size_for_region(size_t region_size, size_t min_pages, bool must_be_aligned);
@@ -528,7 +527,7 @@ class os: AllStatic {
   static char*  non_memory_address_word();
   // reserve, commit and pin the entire memory region
   static char*  reserve_memory_special(size_t size, size_t alignment, size_t page_size,
-                                       char* addr, bool executable);
+                                       char* addr, MEMFLAGS mt_flag, bool executable);
   static bool   release_memory_special(char* addr, size_t bytes, MEMFLAGS flag);
   static void   large_page_init();
   static size_t large_page_size();

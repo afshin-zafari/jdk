@@ -29,7 +29,7 @@
  *          java.management
  * @build jdk.test.whitebox.WhiteBox
  * @run driver jdk.test.lib.helpers.ClassFileInstaller jdk.test.whitebox.WhiteBox
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:NativeMemoryTracking=light ReleaseNoCommitLightweight
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:NativeMemoryTracking=light -Xlog:nmt*=debug ReleaseNoCommitLightweight
  */
 
 import jdk.test.lib.JDKToolFinder;
@@ -55,6 +55,7 @@ public class ReleaseNoCommitLightweight {
         pb.command(new String[] { JDKToolFinder.getJDKTool("jcmd"), pid, "VM.native_memory", "scale=KB"});
         output = new OutputAnalyzer(pb.start());
         output.shouldContain(" Test (reserved=256KB, committed=0KB)");
+        System.out.println(output.getOutput());
 
         wb.NMTReleaseMemory(addr, reserveSize);
 

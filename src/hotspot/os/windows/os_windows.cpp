@@ -3118,7 +3118,7 @@ static char* allocate_pages_individually(size_t bytes, char* addr, DWORD flags,
                                 PAGE_READWRITE);
   // If reservation failed, return null
   if (p_buf == nullptr) return nullptr;
-  MemTracker::record_virtual_memory_reserve((address)p_buf, size_of_reserve, CALLER_PC);
+  MemTracker::record_virtual_memory_reserve((address)p_buf, size_of_reserve, CALLER_PC, mt_flag);
   os::release_memory(p_buf, bytes + chunk_size, mt_flag);
 
   // we still need to round up to a page boundary (in case we are using large pages)
@@ -3179,7 +3179,7 @@ static char* allocate_pages_individually(size_t bytes, char* addr, DWORD flags,
         // need to create a dummy 'reserve' record to match
         // the release.
         MemTracker::record_virtual_memory_reserve((address)p_buf,
-                                                  bytes_to_release, CALLER_PC);
+                                                  bytes_to_release, CALLER_PC, mt_flag);
         os::release_memory(p_buf, bytes_to_release, mt_flag);
       }
 #ifdef ASSERT
@@ -3197,9 +3197,9 @@ static char* allocate_pages_individually(size_t bytes, char* addr, DWORD flags,
   // Although the memory is allocated individually, it is returned as one.
   // NMT records it as one block.
   if ((flags & MEM_COMMIT) != 0) {
-    MemTracker::record_virtual_memory_reserve_and_commit((address)p_buf, bytes, CALLER_PC);
+    MemTracker::record_virtual_memory_reserve_and_commit((address)p_buf, bytes, CALLER_PC, mt_flag);
   } else {
-    MemTracker::record_virtual_memory_reserve((address)p_buf, bytes, CALLER_PC);
+    MemTracker::record_virtual_memory_reserve((address)p_buf, bytes, CALLER_PC, mt_flag);
   }
 
   // made it this far, success
@@ -3488,7 +3488,7 @@ static char* find_aligned_address(size_t size, size_t alignment) {
   return aligned_addr;
 }
 
-static char* reserve_large_pages_aligned(size_t size, size_t alignment, bool exec) {
+static char* reserve_large_pages_aligned(size_t size, size_t alignment, MEMFLAGS mt_flag, bool exec) {
   log_debug(pagesize)("Reserving large pages at an aligned address, alignment=" SIZE_FORMAT "%s",
                       byte_size_in_exact_unit(alignment), exact_unit_for_byte_size(alignment));
 
@@ -3501,7 +3501,7 @@ static char* reserve_large_pages_aligned(size_t size, size_t alignment, bool exe
     char* aligned_address = find_aligned_address(size, alignment);
 
     // Try to do the large page reservation using the aligned address.
-    aligned_address = reserve_large_pages(size, aligned_address, exec);
+    aligned_address = reserve_large_pages(size, aligned_address, mt_flag, exec);
     if (aligned_address != nullptr) {
       // Reservation at the aligned address succeeded.
       guarantee(is_aligned(aligned_address, alignment), "Must be aligned");
@@ -3514,7 +3514,7 @@ static char* reserve_large_pages_aligned(size_t size, size_t alignment, bool exe
 }
 
 char* os::pd_reserve_memory_special(size_t bytes, size_t alignment, size_t page_size, char* addr,
-                                    bool exec) {
+                                    MEMFLAGS mt_flag, bool exec) {
   assert(UseLargePages, "only for large pages");
   assert(page_size == os::large_page_size(), "Currently only support one large page size on Windows");
   assert(is_aligned(addr, alignment), "Must be");
@@ -3530,11 +3530,11 @@ char* os::pd_reserve_memory_special(size_t bytes, size_t alignment, size_t page_
   // ensure that the requested alignment is met. When there is a requested address
   // this solves it self, since it must be properly aligned already.
   if (addr == nullptr && alignment > page_size) {
-    return reserve_large_pages_aligned(bytes, alignment, exec);
+    return reserve_large_pages_aligned(bytes, alignment, mt_flag, exec);
   }
 
   // No additional requirements, just reserve the large pages.
-  return reserve_large_pages(bytes, addr, exec);
+  return reserve_large_pages(bytes, addr, mt_flag, exec);
 }
 
 bool os::pd_release_memory_special(char* base, size_t bytes) {
@@ -5050,8 +5050,8 @@ void os::funlockfile(FILE* fp) {
 
 // Map a block of memory.
 char* os::pd_map_memory(int fd, const char* file_name, size_t file_offset,
-                        char *addr, size_t bytes, bool read_only,
-                        MEMFLAGS mt_flag, bool allow_exec) {
+                        char *addr, size_t bytes, MEMFLAGS mt_flag,
+                        bool read_only, bool allow_exec) {
 
   errno_t err;
   wchar_t* wide_path = wide_abs_unc_path(file_name, err);
@@ -5091,7 +5091,7 @@ char* os::pd_map_memory(int fd, const char* file_name, size_t file_offset,
     }
 
     // Record virtual memory allocation
-    MemTracker::record_virtual_memory_reserve_and_commit((address)addr, bytes, CALLER_PC);
+    MemTracker::record_virtual_memory_reserve_and_commit((address)addr, bytes, CALLER_PC, mt_flag);
 
     DWORD bytes_read;
     OVERLAPPED overlapped;

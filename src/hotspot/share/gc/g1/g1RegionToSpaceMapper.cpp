@@ -47,8 +47,11 @@ G1RegionToSpaceMapper::G1RegionToSpaceMapper(ReservedSpace rs,
   _memory_type(type) {
   guarantee(is_power_of_2(page_size), "must be");
   guarantee(is_power_of_2(region_granularity), "must be");
-
-  MemTracker::record_virtual_memory_type((address)rs.base(), rs.size(), type);
+  if (MemTracker::is_light_mode()) {
+    NMTLightTracker::record_virtual_memory_reserve(rs.size(), type);
+  } else {
+    MemTracker::record_virtual_memory_type((address)rs.base(), rs.size(), type);
+  }
 }
 
 // Used to manually signal a mapper to handle a set of regions as committed.

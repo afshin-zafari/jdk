@@ -51,6 +51,9 @@ void ThreadStackTracker::new_thread_stack(void* base, size_t size, const NativeC
   assert(base != nullptr, "Should have been filtered");
   if (MemTracker::is_light_mode()) {
     Atomic::inc(&_thread_count);
+    log_debug(nmt)("reserve, " INTPTR_FORMAT ", %s, " SIZE_FORMAT, p2i(base), NMTUtil::flag_to_name(mtThread), size);
+    NMTLightTracker::record_virtual_memory_reserve(size, mtThread);
+    NMTLightTracker::record_virtual_memory_release(size, mtThreadStack);
     return;
   }
   ThreadCritical tc;
@@ -73,10 +76,12 @@ void ThreadStackTracker::delete_thread_stack(void* base, size_t size) {
   assert(base != nullptr, "Should have been filtered");
   if (MemTracker::is_light_mode()) {
     Atomic::dec(&_thread_count);
+    log_debug(nmt)("release thstck, " INTPTR_FORMAT ", %s, " SIZE_FORMAT, p2i(base), NMTUtil::flag_to_name(mtThreadStack), size);
+    NMTLightTracker::record_virtual_memory_release(size, mtThreadStack);
     return;
   }
   ThreadCritical tc;
-  if(track_as_vm()) {
+  if (track_as_vm()) {
     VirtualMemoryTracker::remove_released_region((address)base, size);
   } else {
     // Use a slot in mallocMemorySummary for thread stack bookkeeping

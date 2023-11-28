@@ -54,7 +54,7 @@ namespace {
     const size_t _size;
    public:
     static char* reserve_memory_special_huge_tlbfs(size_t bytes, size_t alignment, size_t page_size, char* req_addr, bool exec) {
-      return os::reserve_memory_special(bytes, alignment, page_size, req_addr, exec);
+      return os::reserve_memory_special(bytes, alignment, page_size, req_addr, mtTest, exec);
     }
     HugeTlbfsMemory(char* const ptr, size_t size) : _ptr(ptr), _size(size) { }
     ~HugeTlbfsMemory() {
@@ -224,7 +224,7 @@ class TestReserveMemorySpecial : AllStatic {
     if (!using_static_hugepages()) {
       return;
     }
-    char* addr = os::reserve_memory_special(size, alignment, page_size, NULL, false);
+    char* addr = os::reserve_memory_special(size, alignment, page_size, NULL, mtTest, false);
     if (addr != NULL) {
       small_page_write(addr, size);
       os::release_memory_special(addr, size, mtTest);
@@ -281,7 +281,7 @@ class TestReserveMemorySpecial : AllStatic {
     for (int i = 0; i < num_sizes; i++) {
       const size_t size = sizes[i];
       for (size_t alignment = ag; is_aligned(size, alignment); alignment *= 2) {
-        char* p = os::reserve_memory_special(size, alignment, lp, NULL, false);
+        char* p = os::reserve_memory_special(size, alignment, lp, NULL, mtTest, false);
         if (p != NULL) {
           EXPECT_TRUE(is_aligned(p, alignment));
           small_page_write(p, size);
@@ -296,7 +296,7 @@ class TestReserveMemorySpecial : AllStatic {
       for (size_t alignment = ag; is_aligned(size, alignment); alignment *= 2) {
         // req_addr must be at least large page aligned.
         char* const req_addr = align_up(mapping1, MAX2(alignment, lp));
-        char* p = os::reserve_memory_special(size, alignment, lp, req_addr, false);
+        char* p = os::reserve_memory_special(size, alignment, lp, req_addr, mtTest, false);
         if (p != NULL) {
           EXPECT_EQ(p, req_addr);
           small_page_write(p, size);
@@ -311,7 +311,7 @@ class TestReserveMemorySpecial : AllStatic {
       for (size_t alignment = ag; is_aligned(size, alignment); alignment *= 2) {
         // req_addr must be at least large page aligned.
         char* const req_addr = align_up(mapping2, MAX2(alignment, lp));
-        char* p = os::reserve_memory_special(size, alignment, lp, req_addr, false);
+        char* p = os::reserve_memory_special(size, alignment, lp, req_addr, mtTest, false);
         // as the area around req_addr contains already existing mappings, the API should always
         // return NULL (as per contract, it cannot return another address)
         EXPECT_TRUE(p == NULL);

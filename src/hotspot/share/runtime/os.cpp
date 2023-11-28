@@ -1811,7 +1811,7 @@ char* os::reserve_memory(size_t bytes, MEMFLAGS flags, bool executable) {
 char* os::attempt_reserve_memory_at(char* addr, size_t bytes, MEMFLAGS mt_flag, bool executable) {
   char* result = pd_attempt_reserve_memory_at(addr, bytes, mt_flag, executable);
   if (result != nullptr) {
-    MemTracker::record_virtual_memory_reserve((address)result, bytes, CALLER_PC);
+    MemTracker::record_virtual_memory_reserve((address)result, bytes, CALLER_PC, mt_flag);
     log_debug(os)("Reserved memory at " INTPTR_FORMAT " for " SIZE_FORMAT " bytes.", p2i(addr), bytes);
   } else {
     log_debug(os)("Attempt to reserve memory at " INTPTR_FORMAT " for "
@@ -2003,7 +2003,7 @@ char* os::attempt_reserve_memory_between(char* min, char* max, size_t bytes, siz
     assert(is_aligned(result, alignment), "alignment invalid (" ERRFMT ")", ERRFMTARGS);
     log_trace(os, map)(ERRFMT, ERRFMTARGS);
     log_debug(os, map)("successfully attached at " PTR_FORMAT, p2i(result));
-    MemTracker::record_virtual_memory_reserve((address)result, bytes, CALLER_PC);
+    MemTracker::record_virtual_memory_reserve((address)result, bytes, CALLER_PC, mt_flag);
   }
   return result;
 #undef ARGSFMT
@@ -2021,6 +2021,7 @@ bool os::commit_memory(char* addr, size_t bytes, MEMFLAGS flag, bool executable)
   assert_nonempty_range(addr, bytes);
   bool res = pd_commit_memory(addr, bytes, executable);
   if (res) {
+    log_debug(nmt)("os commit no align");
     MemTracker::record_virtual_memory_commit((address)addr, bytes, CALLER_PC, flag);
   }
   return res;
@@ -2031,6 +2032,7 @@ bool os::commit_memory(char* addr, size_t size, size_t alignment_hint,
   assert_nonempty_range(addr, size);
   bool res = os::pd_commit_memory(addr, size, alignment_hint, executable);
   if (res) {
+    log_debug(nmt)("os commit with align");
     MemTracker::record_virtual_memory_commit((address)addr, size, CALLER_PC, flag);
   }
   return res;
@@ -2040,6 +2042,7 @@ void os::commit_memory_or_exit(char* addr, size_t bytes, MEMFLAGS flag, bool exe
                                const char* mesg) {
   assert_nonempty_range(addr, bytes);
   pd_commit_memory_or_exit(addr, bytes, executable, mesg);
+  log_debug(nmt)("os commit or exit");
   MemTracker::record_virtual_memory_commit((address)addr, bytes, CALLER_PC, flag);
 }
 
@@ -2047,6 +2050,7 @@ void os::commit_memory_or_exit(char* addr, size_t size, size_t alignment_hint,
                                MEMFLAGS flag, bool executable, const char* mesg) {
   assert_nonempty_range(addr, size);
   os::pd_commit_memory_or_exit(addr, size, alignment_hint, executable, mesg);
+  log_debug(nmt)("os commit or exit with align");
   MemTracker::record_virtual_memory_commit((address)addr, size, CALLER_PC, flag);
 }
 
@@ -2057,6 +2061,7 @@ bool os::uncommit_memory(char* addr, size_t bytes, MEMFLAGS flag, bool executabl
     if (MemTracker::is_light_mode()) {
       res = pd_uncommit_memory(addr, bytes, executable);
       if (res) {
+        log_debug(nmt)("uncommit, " INTPTR_FORMAT ", %s, " SIZE_FORMAT, p2i(addr), NMTUtil::flag_to_name(flag), bytes);
         NMTLightTracker::record_virtual_memory_uncommit(bytes, flag);
       }
     } else {
@@ -2079,6 +2084,7 @@ bool os::release_memory(char* addr, size_t bytes, MEMFLAGS flag) {
     if (MemTracker::is_light_mode()) {
       res = pd_release_memory(addr, bytes);
       if (res) {
+        log_debug(nmt)("release memory, " INTPTR_FORMAT ", %s, " SIZE_FORMAT, p2i(addr), NMTUtil::flag_to_name(flag), bytes);
         NMTLightTracker::record_virtual_memory_release(bytes, flag);
       }
     } else {
@@ -2137,7 +2143,7 @@ char* os::map_memory_to_file(size_t bytes, int file_desc, MEMFLAGS mt_flag) {
   // On all current implementations null is interpreted as any available address.
   char* result = os::map_memory_to_file(nullptr /* addr */, bytes, file_desc, mt_flag);
   if (result != nullptr) {
-    MemTracker::record_virtual_memory_reserve_and_commit(result, bytes, CALLER_PC);
+    MemTracker::record_virtual_memory_reserve_and_commit(result, bytes, CALLER_PC, mt_flag);
   }
   return result;
 }
@@ -2145,17 +2151,17 @@ char* os::map_memory_to_file(size_t bytes, int file_desc, MEMFLAGS mt_flag) {
 char* os::attempt_map_memory_to_file_at(char* addr, size_t bytes, int file_desc, MEMFLAGS mt_flag) {
   char* result = pd_attempt_map_memory_to_file_at(addr, bytes, file_desc, mt_flag);
   if (result != nullptr) {
-    MemTracker::record_virtual_memory_reserve_and_commit((address)result, bytes, CALLER_PC);
+    MemTracker::record_virtual_memory_reserve_and_commit((address)result, bytes, CALLER_PC, mt_flag);
   }
   return result;
 }
 
 char* os::map_memory(int fd, const char* file_name, size_t file_offset,
                            char *addr, size_t bytes, bool read_only,
-                           bool allow_exec, MEMFLAGS flags) {
-  char* result = pd_map_memory(fd, file_name, file_offset, addr, bytes, read_only, allow_exec);
+                           bool allow_exec, MEMFLAGS mt_flag) {
+  char* result = pd_map_memory(fd, file_name, file_offset, addr, bytes, mt_flag, read_only, allow_exec);
   if (result != nullptr) {
-    MemTracker::record_virtual_memory_reserve_and_commit((address)result, bytes, CALLER_PC, flags);
+    MemTracker::record_virtual_memory_reserve_and_commit((address)result, bytes, CALLER_PC, mt_flag);
   }
   return result;
 }
@@ -2173,6 +2179,7 @@ bool os::unmap_memory(char *addr, size_t bytes, MEMFLAGS flag) {
     if (MemTracker::is_light_mode()) {
       result = pd_unmap_memory(addr, bytes);
       if (result) {
+        log_debug(nmt)("release unmap, " INTPTR_FORMAT ", %s, " SIZE_FORMAT, p2i(addr), NMTUtil::flag_to_name(flag), bytes);
         NMTLightTracker::record_virtual_memory_release(bytes, flag);
       }
     } else {
@@ -2197,14 +2204,14 @@ void os::realign_memory(char *addr, size_t bytes, size_t alignment_hint) {
 }
 
 char* os::reserve_memory_special(size_t size, size_t alignment, size_t page_size,
-                                 char* addr, bool executable) {
+                                 char* addr, MEMFLAGS mt_flag, bool executable) {
 
   assert(is_aligned(addr, alignment), "Unaligned request address");
 
-  char* result = pd_reserve_memory_special(size, alignment, page_size, addr, executable);
+  char* result = pd_reserve_memory_special(size, alignment, page_size, addr, mt_flag, executable);
   if (result != nullptr) {
     // The memory is committed
-    MemTracker::record_virtual_memory_reserve_and_commit((address)result, size, CALLER_PC);
+    MemTracker::record_virtual_memory_reserve_and_commit((address)result, size, CALLER_PC, mt_flag);
   }
 
   return result;
@@ -2216,6 +2223,7 @@ bool os::release_memory_special(char* addr, size_t bytes, MEMFLAGS mt_flag) {
     if (MemTracker::is_light_mode()) {
       res = pd_release_memory_special(addr, bytes);
       if (res) {
+        log_debug(nmt)("release special, " INTPTR_FORMAT ", %s, " SIZE_FORMAT, p2i(addr), NMTUtil::flag_to_name(mt_flag), bytes);
         NMTLightTracker::record_virtual_memory_release(bytes, mt_flag);
       }
     } else {

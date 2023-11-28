@@ -168,6 +168,7 @@ class MemTracker : AllStatic {
     if (!enabled()) return;
     if (addr != nullptr) {
       if (is_light_mode()) {
+        log_debug(nmt)("light reserve, " INTPTR_FORMAT ", %s, " SIZE_FORMAT, p2i(addr), NMTUtil::flag_to_name(flag), size);
         NMTLightTracker::record_virtual_memory_reserve(size, flag);
         return;
       } else {
@@ -183,6 +184,7 @@ class MemTracker : AllStatic {
     if (!enabled()) return;
     if (addr != nullptr) {
       if (is_light_mode()) {
+        log_debug(nmt)("light reserve-and-commit, " INTPTR_FORMAT ", %s, " SIZE_FORMAT, p2i(addr), NMTUtil::flag_to_name(flag), size);
         NMTLightTracker::record_virtual_memory_reserve_and_commit(size, flag);
         return;
       } else {
@@ -199,6 +201,7 @@ class MemTracker : AllStatic {
     if (!enabled()) return;
     if (addr != nullptr) {
       if (MemTracker::is_light_mode()) {
+        log_debug(nmt)("light commit, " INTPTR_FORMAT ", %s, " SIZE_FORMAT, p2i(addr), NMTUtil::flag_to_name(flag), size);
         NMTLightTracker::record_virtual_memory_commit(size, flag);
         return;
       } else {
@@ -219,6 +222,7 @@ class MemTracker : AllStatic {
     if (!enabled()) return;
     if (addr != nullptr) {
       if (is_light_mode()) {
+        log_debug(nmt)("light split, " INTPTR_FORMAT ", -- , " SIZE_FORMAT_X " , " SIZE_FORMAT_X, p2i(addr), size, split);
         NMTLightTracker::record_virtual_memory_split_reserved(size, split);
         return;
       } else {
@@ -233,6 +237,7 @@ class MemTracker : AllStatic {
     if (!enabled()) return;
     if (addr != nullptr) {
       if (is_light_mode()) {
+        log_debug(nmt)("light set-type " INTPTR_FORMAT ", %s, " SIZE_FORMAT, p2i(addr), NMTUtil::flag_to_name(flag), size);
         NMTLightTracker::record_virtual_memory_type(size, flag);
         return;
       } else {

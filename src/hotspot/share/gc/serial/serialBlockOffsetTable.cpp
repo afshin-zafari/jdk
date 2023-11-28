@@ -38,7 +38,8 @@ SerialBlockOffsetSharedArray::SerialBlockOffsetSharedArray(MemRegion reserved,
   _reserved(reserved),
   _vs(mtGC) {
   size_t size = compute_size(reserved.word_size());
-  ReservedSpace rs(size, mtGC);
+  MEMFLAGS mf = MemTracker::is_light_mode() ? mtGC : mtNone;
+  ReservedSpace rs(size, mf);
   if (!rs.is_reserved()) {
     vm_exit_during_initialization("Could not reserve enough space for heap offset array");
   }

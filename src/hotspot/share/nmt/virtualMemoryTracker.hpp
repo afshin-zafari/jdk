@@ -48,6 +48,9 @@ class VirtualMemory {
 #endif // ASSERT
 
  public:
+#ifdef ASSERT
+  void set_peak_size(size_t size);
+#endif // ASSERT
   VirtualMemory() : _reserved(0), _committed(0) {
     DEBUG_ONLY(_peak_size  = 0;)
   }
