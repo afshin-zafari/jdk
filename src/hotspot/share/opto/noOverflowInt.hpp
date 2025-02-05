@@ -76,7 +76,7 @@ public:
     if (b.is_NaN()) { return b; }
     jint shift = b.value();
     if (shift < 0 || shift > 31) { return make_NaN(); }
-    return NoOverflowInt((jlong)a.value() << shift);
+    return NoOverflowInt((julong)a.value() << shift);
   }
 
   friend bool operator==(const NoOverflowInt& a, const NoOverflowInt& b) {

@@ -959,6 +959,7 @@ Node* LShiftINode::Identity(PhaseGVN* phase) {
 //------------------------------Ideal------------------------------------------
 // If the right input is a constant, and the left input is an add of a
 // constant, flatten the tree: (X+con1)<<con0 ==> X<<con0 + con1<<con0
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 Node *LShiftINode::Ideal(PhaseGVN *phase, bool can_reshape) {
   int con = maskShiftAmount(phase, this, BitsPerJavaInteger);
   if (con == 0) {
@@ -988,7 +989,7 @@ Node *LShiftINode::Ideal(PhaseGVN *phase, bool can_reshape) {
         // Compute X << con0
         Node *lsh = phase->transform( new LShiftINode( add1->in(1), in(2) ) );
         // Compute X<<con0 + (con1<<con0)
-        return new AddINode( lsh, phase->intcon(t12->get_con() << con));
+        return new AddINode( lsh, phase->intcon((juint)t12->get_con() << con));
       }
     }
   }
@@ -1076,6 +1077,7 @@ Node *LShiftINode::Ideal(PhaseGVN *phase, bool can_reshape) {
 
 //------------------------------Value------------------------------------------
 // A LShiftINode shifts its input2 left by input1 amount.
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 const Type* LShiftINode::Value(PhaseGVN* phase) const {
   const Type *t1 = phase->type( in(1) );
   const Type *t2 = phase->type( in(2) );
@@ -1108,17 +1110,17 @@ const Type* LShiftINode::Value(PhaseGVN* phase) const {
   // unless this could lead to an overflow.
   if (!r1->is_con()) {
     jint lo = r1->_lo, hi = r1->_hi;
-    if (((lo << shift) >> shift) == lo &&
-        ((hi << shift) >> shift) == hi) {
+    if (((jint)((juint)(lo) << shift) >> shift) == lo &&
+        ((jint)((juint)(hi) << shift) >> shift) == hi) {
       // No overflow.  The range shifts up cleanly.
-      return TypeInt::make((jint)lo << (jint)shift,
-                           (jint)hi << (jint)shift,
+      return TypeInt::make((jint)(((juint)lo) << (jint)shift),
+                           (jint)(((juint)hi) << (jint)shift),
                            MAX2(r1->_widen,r2->_widen));
     }
     return TypeInt::INT;
   }
 
-  return TypeInt::make( (jint)r1->get_con() << (jint)shift );
+  return TypeInt::make( (juint)r1->get_con() << (jint)shift );
 }
 
 //=============================================================================
@@ -1135,6 +1137,7 @@ Node* LShiftLNode::Identity(PhaseGVN* phase) {
 //------------------------------Ideal------------------------------------------
 // If the right input is a constant, and the left input is an add of a
 // constant, flatten the tree: (X+con1)<<con0 ==> X<<con0 + con1<<con0
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 Node *LShiftLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   int con = maskShiftAmount(phase, this, BitsPerJavaLong);
   if (con == 0) {
@@ -1165,7 +1168,7 @@ Node *LShiftLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
       // Compute X << con0
       Node *lsh = phase->transform( new LShiftLNode( add1->in(1), in(2) ) );
       // Compute X<<con0 + (con1<<con0)
-      return new AddLNode( lsh, phase->longcon(t12->get_con() << con));
+      return new AddLNode( lsh, phase->longcon((julong)t12->get_con() << con));
     }
   }
 
@@ -1252,6 +1255,7 @@ Node *LShiftLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 
 //------------------------------Value------------------------------------------
 // A LShiftLNode shifts its input2 left by input1 amount.
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 const Type* LShiftLNode::Value(PhaseGVN* phase) const {
   const Type *t1 = phase->type( in(1) );
   const Type *t2 = phase->type( in(2) );
@@ -1284,21 +1288,22 @@ const Type* LShiftLNode::Value(PhaseGVN* phase) const {
   // unless this could lead to an overflow.
   if (!r1->is_con()) {
     jlong lo = r1->_lo, hi = r1->_hi;
-    if (((lo << shift) >> shift) == lo &&
-        ((hi << shift) >> shift) == hi) {
+    if (((jlong)((julong)(lo) << shift) >> shift) == lo &&
+        ((jlong)((julong)(hi) << shift) >> shift) == hi) {
       // No overflow.  The range shifts up cleanly.
-      return TypeLong::make((jlong)lo << (jint)shift,
-                            (jlong)hi << (jint)shift,
+      return TypeLong::make((jlong)((julong)(lo) << (jint)shift),
+                            (jlong)((julong)(hi) << (jint)shift),
                             MAX2(r1->_widen,r2->_widen));
     }
     return TypeLong::LONG;
   }
 
-  return TypeLong::make( (jlong)r1->get_con() << (jint)shift );
+  return TypeLong::make( (jlong)((julong)(r1->get_con()) << (jint)shift) );
 }
 
 //=============================================================================
 //------------------------------Identity---------------------------------------
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 Node* RShiftINode::Identity(PhaseGVN* phase) {
   int count = 0;
   if (const_shift_count(phase, this, &count)) {
@@ -1312,7 +1317,7 @@ Node* RShiftINode::Identity(PhaseGVN* phase) {
         in(1)->in(2) == in(2)) {
       count &= BitsPerJavaInteger-1; // semantics of Java shifts
       // Compute masks for which this shifting doesn't change
-      int lo = (-1 << (BitsPerJavaInteger - ((uint)count)-1)); // FFFF8000
+      int lo = (int)(((uint)-1) << (BitsPerJavaInteger - ((uint)count)-1)); // FFFF8000
       int hi = ~lo;               // 00007FFF
       const TypeInt* t11 = phase->type(in(1)->in(1))->isa_int();
       if (t11 == nullptr) {

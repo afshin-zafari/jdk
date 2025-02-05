@@ -23,12 +23,14 @@
  */
 
 #include "precompiled.hpp"
+#include "sanitizers/ub.hpp"
 #include "utilities/count_trailing_zeros.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "unittest.hpp"
 
-
-template <typename T> static void test_one_or_two_set_bits() {
+template <typename T>
+ATTRIBUTE_NO_UBSAN_SHIFT_BASE
+static void test_one_or_two_set_bits() {
   unsigned i = 0;               // Position of a set bit.
   unsigned max = sizeof(T) * BitsPerByte;
   for (T ix = T(1); i < max; ix <<= 1, ++i) {
@@ -52,7 +54,9 @@ TEST(count_trailing_zeros, one_or_two_set_bits) {
   test_one_or_two_set_bits<uint64_t>();
 }
 
-template <typename T> static void test_high_zeros_low_ones() {
+template <typename T>
+ATTRIBUTE_NO_UBSAN_SHIFT_BASE
+static void test_high_zeros_low_ones() {
   T value = std::numeric_limits<T>::max();
   for ( ; value != 0; value >>= 1) {
     EXPECT_EQ(0u, count_trailing_zeros(value))
@@ -71,7 +75,9 @@ TEST(count_trailing_zeros, high_zeros_low_ones) {
   test_high_zeros_low_ones<uint64_t>();
 }
 
-template <typename T> static void test_high_ones_low_zeros() {
+template <typename T>
+ATTRIBUTE_NO_UBSAN_SHIFT_BASE
+static void test_high_ones_low_zeros() {
   unsigned i = 0;               // Index of least significant set bit.
   T value = ~T(0);
   unsigned max = sizeof(T) * BitsPerByte;

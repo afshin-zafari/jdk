@@ -473,7 +473,7 @@ void external_word_Relocation::unpack_data() {
   _target = ExternalsRecorder::at(index);
 }
 
-
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 void internal_word_Relocation::pack_data_to(CodeSection* dest) {
   short* p = (short*) dest->locs_end();
   normalize_address(_target, dest, true);
@@ -506,7 +506,7 @@ void internal_word_Relocation::pack_data_to(CodeSection* dest) {
     CodeSection* sect = dest->outer()->code_section(sindex);
     guarantee(sect->allocates2(_target), "must be in correct section");
     address base = sect->start();
-    jint offset = scaled_offset(_target, base);
+    juint offset = scaled_offset(_target, base);
     assert((uint)sindex < (uint)CodeBuffer::SECT_LIMIT, "sanity");
     assert(CodeBuffer::SECT_LIMIT <= (1 << section_width), "section_width++");
     p = pack_1_int_to(p, (offset << section_width) | sindex);

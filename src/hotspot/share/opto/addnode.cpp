@@ -549,6 +549,7 @@ Node* AddNode::find_power_of_two_addition_pattern(Node* n, BasicType bt, jlong* 
   return nullptr;
 }
 
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 Node* AddINode::Ideal(PhaseGVN* phase, bool can_reshape) {
   Node* in1 = in(1);
   Node* in2 = in(2);
@@ -573,7 +574,7 @@ Node* AddINode::Ideal(PhaseGVN* phase, bool can_reshape) {
 
     if (z < 5 && -5 < y && y < 0) {
       const Type* t_in11 = phase->type(in1->in(1));
-      if( t_in11 != Type::TOP && (t_in11->is_int()->_lo >= -(y << z))) {
+      if( t_in11 != Type::TOP && (t_in11->is_int()->_lo >= -(jint)((juint)y << z))) {
         Node* a = phase->transform(new AddINode( in1->in(1), phase->intcon(y<<z)));
         return new URShiftINode(a, in1->in(2));
       }

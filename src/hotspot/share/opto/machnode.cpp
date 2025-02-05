@@ -269,6 +269,7 @@ const MachOper*  MachNode::memory_inputs(Node* &base, Node* &index) const {
 }
 
 //-----------------------------get_base_and_disp----------------------------
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 const Node* MachNode::get_base_and_disp(intptr_t &offset, const TypePtr* &adr_type) const {
 
   // Find the memory inputs using our helper function
@@ -308,7 +309,7 @@ const Node* MachNode::get_base_and_disp(intptr_t &offset, const TypePtr* &adr_ty
         if (ti == nullptr) {
           disp = Type::OffsetBot;  // a random constant??
         } else {
-          disp += ti->get_con() << scale;
+          disp += (julong)ti->get_con() << scale;
         }
       }
     }

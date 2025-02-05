@@ -2284,13 +2284,14 @@ class AdapterFingerPrint : public CHeapObj<mtCode> {
     return _length <= 0;
   }
 
+  //ATTRIBUTE_NO_UBSAN_SHIFT_BASE
   unsigned int compute_hash() {
-    int hash = 0;
+    unsigned int hash = 0;
     for (int i = 0; i < length(); i++) {
       int v = value(i);
       hash = (hash << 8) ^ v ^ (hash >> 5);
     }
-    return (unsigned int)hash;
+    return hash;
   }
 
   const char* as_string() {

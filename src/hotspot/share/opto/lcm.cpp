@@ -515,6 +515,7 @@ void PhaseCFG::implicit_null_check(Block* block, Node *proj, Node *val, int allo
 // remaining cases (most), choose the instruction with the greatest latency
 // (that is, the most number of pseudo-cycles required to the end of the
 // routine). If there is a tie, choose the instruction with the most inputs.
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 Node* PhaseCFG::select(
   Block* block,
   Node_List &worklist,
@@ -649,7 +650,7 @@ Node* PhaseCFG::select(
         short int_pressure = (short)_regalloc->_scratch_int_pressure.current_pressure();
         short float_pressure = (short)_regalloc->_scratch_float_pressure.current_pressure();
         recalc_pressure_nodes[n->_idx] = int_pressure;
-        recalc_pressure_nodes[n->_idx] |= (float_pressure << 16);
+        recalc_pressure_nodes[n->_idx] |= ((unsigned long)float_pressure << 16);
       }
 
       if (_scheduling_for_pressure) {

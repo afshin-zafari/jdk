@@ -74,16 +74,17 @@ const Type* CountLeadingZerosLNode::Value(PhaseGVN* phase) const {
 }
 
 //------------------------------Value------------------------------------------
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 const Type* CountTrailingZerosINode::Value(PhaseGVN* phase) const {
   const Type* t = phase->type(in(1));
   if (t == Type::TOP) return Type::TOP;
   const TypeInt* ti = t->isa_int();
   if (ti && ti->is_con()) {
-    jint i = ti->get_con();
+    juint i = ti->get_con();
     // HD, Figure 5-14
-    int y;
+    uint y;
     if (i == 0)
-    return TypeInt::make(BitsPerInt);
+      return TypeInt::make(BitsPerInt);
     int n = 31;
     y = i << 16; if (y != 0) { n = n - 16; i = y; }
     y = i <<  8; if (y != 0) { n = n -  8; i = y; }
@@ -96,6 +97,7 @@ const Type* CountTrailingZerosINode::Value(PhaseGVN* phase) const {
 }
 
 //------------------------------Value------------------------------------------
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 const Type* CountTrailingZerosLNode::Value(PhaseGVN* phase) const {
   const Type* t = phase->type(in(1));
   if (t == Type::TOP) return Type::TOP;
@@ -103,11 +105,11 @@ const Type* CountTrailingZerosLNode::Value(PhaseGVN* phase) const {
   if (tl && tl->is_con()) {
     jlong l = tl->get_con();
     // HD, Figure 5-14
-    int x, y;
+    ulong x, y;
     if (l == 0)
     return TypeInt::make(BitsPerLong);
     int n = 63;
-    y = (int) l; if (y != 0) { n = n - 32; x = y; } else x = (((julong) l) >> 32);
+    y = (ulong) l; if (y != 0) { n = n - 32; x = y; } else x = (((julong) l) >> 32);
     y = x << 16; if (y != 0) { n = n - 16; x = y; }
     y = x <<  8; if (y != 0) { n = n -  8; x = y; }
     y = x <<  4; if (y != 0) { n = n -  4; x = y; }

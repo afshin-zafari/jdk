@@ -28,6 +28,7 @@
 #include "c1/c1_ValueStack.hpp"
 #include "ci/ciArray.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include <type_traits>
 
 
 class PrintValueVisitor: public ValueVisitor {
@@ -568,12 +569,17 @@ void Canonicalizer::do_Intrinsic      (Intrinsic*       x) {
     break;
   }
 }
+#define SHIFT_LEFT_SAFE(base,n)  \
+  (std::is_unsigned<decltype(base)>::value) ? ((base) << n) \
+  : (((std::make_unsigned_t<decltype(base)>)(base)) << n)
 
+
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 void Canonicalizer::do_Convert        (Convert*         x) {
   if (x->value()->type()->is_constant()) {
     switch (x->op()) {
-    case Bytecodes::_i2b:  set_constant((int)((x->value()->type()->as_IntConstant()->value() << 24) >> 24)); break;
-    case Bytecodes::_i2s:  set_constant((int)((x->value()->type()->as_IntConstant()->value() << 16) >> 16)); break;
+    case Bytecodes::_i2b:  set_constant((int)(SHIFT_LEFT_SAFE(x->value()->type()->as_IntConstant()->value(), 24) >> 24)); break;
+    case Bytecodes::_i2s:  set_constant((int)(SHIFT_LEFT_SAFE(x->value()->type()->as_IntConstant()->value(), 16) >> 16)); break;
     case Bytecodes::_i2c:  set_constant((int)(x->value()->type()->as_IntConstant()->value() & ((1<<16)-1))); break;
     case Bytecodes::_i2l:  set_constant((jlong)(x->value()->type()->as_IntConstant()->value()));             break;
     case Bytecodes::_i2f:  set_constant((float)(x->value()->type()->as_IntConstant()->value()));             break;

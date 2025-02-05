@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "jvm_io.h"
+#include "sanitizers/ub.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/ostream.hpp"
@@ -102,6 +103,7 @@ static void test_valid_all_units(T value, bool hex) {
 }
 
 template <typename T>
+ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 static void test_valid_all_power_of_twos() {
   for (int hex = 0; hex < 3; hex ++) {
     for (T i = 1; i != 0; i <<= 2) {

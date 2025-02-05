@@ -28,6 +28,7 @@
 #include "memory/allocation.hpp"
 #include "oops/oopsHierarchy.hpp"
 #include "runtime/osInfo.hpp"
+#include "sanitizers/ub.hpp"
 #include "utilities/checkedCast.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/macros.hpp"
@@ -411,8 +412,9 @@ class relocInfo {
   // This is an arbitrary choice, made this way mainly to ease debugging.
   static short data0_from_int(jint x)         { return (short)(x >> value_width); }
   static short data1_from_int(jint x)         { return (short)x; }
+  //ATTRIBUTE_NO_UBSAN_SHIFT_BASE
   static jint jint_from_data(short* data) {
-    return (data[0] << value_width) + (unsigned short)data[1];
+    return ((unsigned short)data[0] << value_width) + (unsigned short)data[1];
   }
 
   static jint short_data_at(int n, short* data, int datalen) {

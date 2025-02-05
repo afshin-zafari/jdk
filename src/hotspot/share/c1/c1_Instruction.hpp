@@ -207,8 +207,8 @@ class InstructionVisitor: public StackObj {
 //
 // Note: This hash functions affect the performance
 //       of ValueMap - make changes carefully!
-
-#define HASH1(x1            )                    ((intx)(x1))
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
+#define HASH1(x1            )                    ((uintx)(x1))
 #define HASH2(x1, x2        )                    ((HASH1(x1        ) << 7) ^ HASH1(x2))
 #define HASH3(x1, x2, x3    )                    ((HASH2(x1, x2    ) << 7) ^ HASH1(x3))
 #define HASH4(x1, x2, x3, x4)                    ((HASH3(x1, x2, x3) << 7) ^ HASH1(x4))

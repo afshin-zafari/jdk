@@ -244,10 +244,10 @@ address VtableStubs::find_stub(bool is_vtable_stub, int vtable_index) {
   return s->entry_point();
 }
 
-
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 inline uint VtableStubs::hash(bool is_vtable_stub, int vtable_index){
   // Assumption: receiver_location < 4 in most cases.
-  int hash = ((vtable_index << 2) ^ VtableStub::receiver_location()->value()) + vtable_index;
+  int hash = (((unsigned int)vtable_index << 2) ^ VtableStub::receiver_location()->value()) + vtable_index;
   return (is_vtable_stub ? ~hash : hash)  & mask;
 }
 

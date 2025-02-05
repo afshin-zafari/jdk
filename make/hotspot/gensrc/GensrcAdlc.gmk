@@ -64,8 +64,8 @@ ifeq ($(call check-jvm-feature, compiler2), true)
   ADLC_CFLAGS += $(FILE_MACRO_CFLAGS) $(REPRODUCIBLE_CFLAGS)
 
   ifeq ($(UBSAN_ENABLED), true)
-    ADLC_CFLAGS += $(UBSAN_CFLAGS)
-    ADLC_LDFLAGS += $(UBSAN_LDFLAGS)
+    ADLC_CFLAGS += $(UBSAN_CFLAGS_ADLC)
+    ADLC_LDFLAGS += $(UBSAN_LDFLAGS_ADLC)
   endif
 
   ##############################################################################

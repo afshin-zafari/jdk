@@ -871,6 +871,7 @@ Node* PhaseMacroExpand::generate_arraycopy(ArrayCopyNode *ac, AllocateArrayNode*
 // Exactly one of slice_len or dest_size must be non-null.
 // If dest_size is non-null, zeroing extends to the end of the object.
 // If slice_len is non-null, the slice_idx value must be a constant.
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 void PhaseMacroExpand::generate_clear_array(Node* ctrl, MergeMemNode* merge_mem,
                                             const TypePtr* adr_type,
                                             Node* dest,
@@ -891,8 +892,8 @@ void PhaseMacroExpand::generate_clear_array(Node* ctrl, MergeMemNode* merge_mem,
   // scaling and rounding of indexes:
   int scale = exact_log2(type2aelembytes(basic_elem_type));
   int abase = arrayOopDesc::base_offset_in_bytes(basic_elem_type);
-  int clear_low = (-1 << scale) & (BytesPerInt  - 1);
-  int bump_bit  = (-1 << scale) & BytesPerInt;
+  int clear_low = ((uint)-1 << scale) & (BytesPerInt  - 1);
+  int bump_bit  = ((uint)-1 << scale) & BytesPerInt;
 
   // determine constant starts and ends
   const intptr_t BIG_NEG = -128;
@@ -902,7 +903,7 @@ void PhaseMacroExpand::generate_clear_array(Node* ctrl, MergeMemNode* merge_mem,
   if (slice_len_con == 0) {
     return;                     // nothing to do here
   }
-  intptr_t start_con = (abase + (slice_idx_con << scale)) & ~clear_low;
+  intptr_t start_con = (abase + ((ulong)slice_idx_con << scale)) & ~clear_low;
   intptr_t end_con   = _igvn.find_intptr_t_con(dest_size, -1);
   if (slice_idx_con >= 0 && slice_len_con >= 0) {
     assert(end_con < 0, "not two cons");
@@ -922,8 +923,8 @@ void PhaseMacroExpand::generate_clear_array(Node* ctrl, MergeMemNode* merge_mem,
   } else if (start_con >= 0 && slice_len != top()) {
     // Constant start, non-constant end.  End needs rounding up.
     // End offset = round_up(abase + ((slice_idx_con + slice_len) << scale), 8)
-    intptr_t end_base  = abase + (slice_idx_con << scale);
-    int      end_round = (-1 << scale) & (BytesPerLong  - 1);
+    intptr_t end_base  = abase + ((ulong)slice_idx_con << scale);
+    int      end_round = (((ulong)-1) << scale) & (BytesPerLong  - 1);
     Node*    end       = ConvI2X(slice_len);
     if (scale != 0)
       end = transform_later(new LShiftXNode(end, intcon(scale) ));

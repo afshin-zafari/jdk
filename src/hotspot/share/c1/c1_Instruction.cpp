@@ -366,6 +366,7 @@ ciType* Invoke::declared_type() const {
 }
 
 // Implementation of Constant
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 intx Constant::hash() const {
   if (state_before() == nullptr) {
     switch (type()->tag()) {

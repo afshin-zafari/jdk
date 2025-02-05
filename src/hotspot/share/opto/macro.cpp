@@ -275,6 +275,7 @@ static Node *scan_mem_chain(Node *mem, int alias_idx, int offset, Node *start_me
 
 // Generate loads from source of the arraycopy for fields of
 // destination needed at a deoptimization point
+//ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 Node* PhaseMacroExpand::make_arraycopy_load(ArrayCopyNode* ac, intptr_t offset, Node* ctl, Node* mem, BasicType ft, const Type *ftype, AllocateNode *alloc) {
   BasicType bt = ft;
   const Type *type = ftype;
@@ -303,7 +304,7 @@ Node* PhaseMacroExpand::make_arraycopy_load(ArrayCopyNode* ac, intptr_t offset, 
       Node* adr = nullptr;
       const TypePtr* adr_type = nullptr;
       if (src_pos_t->is_con() && dest_pos_t->is_con()) {
-        intptr_t off = ((src_pos_t->get_con() - dest_pos_t->get_con()) << shift) + offset;
+        intptr_t off = ((juint)(src_pos_t->get_con() - dest_pos_t->get_con()) << shift) + offset;
         Node* base = ac->in(ArrayCopyNode::Src);
         adr = _igvn.transform(new AddPNode(base, base, _igvn.MakeConX(off)));
         adr_type = _igvn.type(base)->is_ptr()->add_offset(off);

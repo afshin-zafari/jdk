@@ -688,7 +688,7 @@ inline void set_low (jlong* value, jint low )    { *value &= (jlong)0xffffffff <
                                                    *value |= (jlong)(julong)(juint)low; }
 
 inline void set_high(jlong* value, jint high)    { *value &= (jlong)(julong)(juint)0xffffffff;
-                                                   *value |= (jlong)high       << 32; }
+                                                   *value |= (julong)((jlong)high)    << 32; }
 
 inline jlong jlong_from(jint h, jint l) {
   jlong result = 0; // initialization to avoid warning

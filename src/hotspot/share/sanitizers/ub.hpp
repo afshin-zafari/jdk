@@ -35,11 +35,13 @@
 #ifdef UNDEFINED_BEHAVIOR_SANITIZER
 #if defined(__clang__) || defined(__GNUC__)
 #define ATTRIBUTE_NO_UBSAN __attribute__((no_sanitize("undefined")))
+#define ATTRIBUTE_NO_UBSAN_SHIFT_BASE __attribute__((no_sanitize("shift-base")))
 #endif
 #endif
 
 #ifndef ATTRIBUTE_NO_UBSAN
 #define ATTRIBUTE_NO_UBSAN
+#define ATTRIBUTE_NO_UBSAN_SHIFT_BASE
 #endif
 
 #endif // SHARE_SANITIZERS_UB_HPP
