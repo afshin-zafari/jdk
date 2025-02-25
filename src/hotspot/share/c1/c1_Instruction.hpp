@@ -208,7 +208,7 @@ class InstructionVisitor: public StackObj {
 // Note: This hash functions affect the performance
 //       of ValueMap - make changes carefully!
 
-#define HASH1(x1            )                    ((intx)(x1))
+#define HASH1(x1            )                    ((uintx)(x1))
 #define HASH2(x1, x2        )                    ((HASH1(x1        ) << 7) ^ HASH1(x2))
 #define HASH3(x1, x2, x3    )                    ((HASH2(x1, x2    ) << 7) ^ HASH1(x3))
 #define HASH4(x1, x2, x3, x4)                    ((HASH3(x1, x2, x3) << 7) ^ HASH1(x4))
@@ -230,7 +230,7 @@ class InstructionVisitor: public StackObj {
 //       so unlikely, that we are not going to handle it specially.
 
 #define HASHING1(class_name, enabled, f1)             \
-  virtual intx hash() const {                         \
+  virtual uintx hash() const {                         \
     return (enabled) ? HASH2(name(), f1) : 0;         \
   }                                                   \
   virtual bool is_equal(Value v) const {              \
@@ -243,7 +243,7 @@ class InstructionVisitor: public StackObj {
 
 
 #define HASHING2(class_name, enabled, f1, f2)         \
-  virtual intx hash() const {                         \
+  virtual uintx hash() const {                         \
     return (enabled) ? HASH3(name(), f1, f2) : 0;     \
   }                                                   \
   virtual bool is_equal(Value v) const {              \
@@ -257,7 +257,7 @@ class InstructionVisitor: public StackObj {
 
 
 #define HASHING3(class_name, enabled, f1, f2, f3)     \
-  virtual intx hash() const {                         \
+  virtual uintx hash() const {                         \
     return (enabled) ? HASH4(name(), f1, f2, f3) : 0; \
   }                                                   \
   virtual bool is_equal(Value v) const {              \
@@ -729,7 +729,7 @@ LEAF(Constant, Instruction)
   virtual bool can_trap() const                  { return state_before() != nullptr; }
   virtual void input_values_do(ValueVisitor* f)   { /* no values */ }
 
-  virtual intx hash() const;
+  virtual uintx hash() const;
   virtual bool is_equal(Value v) const;
 
   virtual ciType* exact_type() const;

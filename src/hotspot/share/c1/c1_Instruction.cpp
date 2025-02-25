@@ -365,7 +365,7 @@ ciType* Invoke::declared_type() const {
 }
 
 // Implementation of Constant
-intx Constant::hash() const {
+uintx Constant::hash() const {
   if (state_before() == nullptr) {
     switch (type()->tag()) {
     case intTag:
