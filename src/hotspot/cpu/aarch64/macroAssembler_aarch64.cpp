@@ -54,6 +54,7 @@
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
+#include "sanitizers/ub.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/powerOfTwo.hpp"
 #ifdef COMPILER1
@@ -427,6 +428,7 @@ public:
     target = address((uint64_t)insn_addr + offset);
     return 1;
   }
+  ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
   virtual int adrp(address insn_addr, address &target, reloc_insn inner) {
     assert(Instruction_aarch64::extract(_insn, 28, 24) == 0b10000, "must be");
     intptr_t offset = Instruction_aarch64::extract(_insn, 30, 29);

@@ -25,6 +25,7 @@
 #ifndef SHARE_ASM_REGISTER_HPP
 #define SHARE_ASM_REGISTER_HPP
 
+#include "sanitizers/ub.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/macros.hpp"
@@ -148,6 +149,7 @@ public:
     return of(r1, r2, r3) + r4;
   }
 
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
   constexpr static AbstractRegSet range(RegImpl start, RegImpl end) {
     int start_enc = start->encoding();
     int   end_enc = end->encoding();

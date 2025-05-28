@@ -769,6 +769,7 @@ void ArchDesc::declare_pipe_classes(FILE *fp_hpp) {
     fprintf(fp_hpp, "  bool overlaps(const Pipeline_Use_Cycle_Mask &in2) const {\n");
     fprintf(fp_hpp, "    return ((_mask & in2._mask) != 0);\n");
     fprintf(fp_hpp, "  }\n\n");
+    fprintf(fp_hpp, "  ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE");
     fprintf(fp_hpp, "  Pipeline_Use_Cycle_Mask& operator<<=(int n) {\n");
     fprintf(fp_hpp, "    _mask <<= n;\n");
     fprintf(fp_hpp, "    return *this;\n");

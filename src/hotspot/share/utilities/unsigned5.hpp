@@ -26,6 +26,7 @@
 #define SHARE_UTILITIES_UNSIGNED5_HPP
 
 #include "memory/allStatic.hpp"
+#include "sanitizers/ub.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/ostream.hpp"
 
@@ -398,6 +399,7 @@ class UNSIGNED5 : AllStatic {
   // 32-bit one-to-one sign encoding taken from Pack200
   // converts leading sign bits into leading zeroes with trailing sign bit
   // use this to better compress 32-bit values that might be negative
+  ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
   static uint32_t encode_sign(int32_t value) { return ((uint32_t)value << 1) ^ (value >> 31); }
   static int32_t decode_sign(uint32_t value) { return (value >> 1) ^ -(int32_t)(value & 1); }
 

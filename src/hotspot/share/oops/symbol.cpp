@@ -38,11 +38,12 @@
 #include "runtime/mutexLocker.hpp"
 #include "runtime/os.hpp"
 #include "runtime/signature.hpp"
+#include "sanitizers/ub.hpp"
 #include "utilities/stringUtils.hpp"
 #include "utilities/utf8.hpp"
 
 Symbol* Symbol::_vm_symbols[vmSymbols::number_of_symbols()];
-
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 uint32_t Symbol::pack_hash_and_refcount(short hash, int refcount) {
   STATIC_ASSERT(PERM_REFCOUNT == ((1 << 16) - 1));
   assert(refcount >= 0, "negative refcount");

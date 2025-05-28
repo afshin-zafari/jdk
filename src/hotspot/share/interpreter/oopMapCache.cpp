@@ -199,6 +199,7 @@ void InterpreterOopMap::initialize() {
   for (int i = 0; i < N; i++) _bit_mask[i] = 0;
 }
 
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 void InterpreterOopMap::iterate_oop(OffsetClosure* oop_closure) const {
   int n = number_of_entries();
   int word_index = 0;
@@ -344,7 +345,7 @@ void OopMapCacheEntry::fill(const methodHandle& method, int bci) {
   }
 }
 
-
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 void OopMapCacheEntry::set_mask(CellTypeState *vars, CellTypeState *stack, int stack_top) {
   // compute bit mask size
   int max_locals = method()->max_locals();

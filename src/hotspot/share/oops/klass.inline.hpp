@@ -116,6 +116,7 @@ inline bool Klass::is_subtype_of(Klass* k) const {
 }
 
 // Hashed search for secondary super k.
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 inline bool Klass::lookup_secondary_supers_table(Klass* k) const {
   uintx bitmap = _secondary_supers_bitmap;
 

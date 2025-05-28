@@ -30,6 +30,7 @@
 #include "oops/metadata.hpp"
 #include "oops/oop.hpp"
 #include "oops/oopHandle.hpp"
+#include "sanitizers/ub.hpp"
 #include "utilities/accessFlags.hpp"
 #include "utilities/macros.hpp"
 #if INCLUDE_JFR
@@ -481,10 +482,12 @@ protected:
   static bool layout_helper_is_array(jint lh) {
     return (jint)lh < (jint)_lh_neutral_value;
   }
+  ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
   static bool layout_helper_is_typeArray(jint lh) {
     // _lh_array_tag_type_value == (lh >> _lh_array_tag_shift);
     return (juint)lh >= (juint)(_lh_array_tag_type_value << _lh_array_tag_shift);
   }
+  ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
   static bool layout_helper_is_objArray(jint lh) {
     // _lh_array_tag_obj_value == (lh >> _lh_array_tag_shift);
     return (jint)lh < (jint)(_lh_array_tag_type_value << _lh_array_tag_shift);

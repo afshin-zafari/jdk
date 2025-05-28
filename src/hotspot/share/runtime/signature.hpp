@@ -28,6 +28,7 @@
 
 #include "memory/allocation.hpp"
 #include "oops/method.hpp"
+#include "sanitizers/ub.hpp"
 
 // Static routines and parsing loops for processing field and method
 // descriptors.  In the HotSpot sources we call them "signatures".
@@ -338,6 +339,7 @@ class Fingerprinter: public SignatureIterator {
 
   friend class SignatureIterator;  // so do_parameters_on can call do_type
 
+  ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
   void do_type(BasicType type) {
     assert(fp_is_valid_type(type), "bad parameter type");
     if (_param_size <= fp_max_size_of_parameters) {

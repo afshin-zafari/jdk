@@ -32,6 +32,7 @@
 #include "runtime/orderAccess.hpp"
 #include "runtime/prefetch.inline.hpp"
 #include "runtime/safepoint.hpp"
+#include "sanitizers/ub.hpp"
 #include "utilities/globalCounter.inline.hpp"
 #include "utilities/growableArray.hpp"
 #include "utilities/numberSeq.hpp"
@@ -191,6 +192,7 @@ inline void ConcurrentHashTable<CONFIG, MT>::
 
 // InternalTable
 template <typename CONFIG, MemTag MT>
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 inline ConcurrentHashTable<CONFIG, MT>::
   InternalTable::InternalTable(size_t log2_size)
     : _log2_size(log2_size), _size(((size_t)1ul) << _log2_size),

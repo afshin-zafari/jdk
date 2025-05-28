@@ -27,6 +27,7 @@
 
 #include "nmt/memTag.hpp"
 #include "runtime/atomic.hpp"
+#include "sanitizers/ub.hpp"
 #include "utilities/globalDefinitions.hpp"
 
 // Forward decl;
@@ -572,6 +573,7 @@ class GrowableBitMap : public BitMap {
  private:
   // Copy the region [start, end) of the bitmap
   // Bits in the selected range are copied to a newly allocated map
+  ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
   bm_word_t* copy_of_range(idx_t start_bit, idx_t end_bit);
 
  public:

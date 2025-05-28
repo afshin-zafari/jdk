@@ -41,6 +41,7 @@
 #include "opto/regmask.hpp"
 #include "opto/rootnode.hpp"
 #include "opto/type.hpp"
+#include "sanitizers/ub.hpp"
 #include "utilities/copy.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/powerOfTwo.hpp"
@@ -1487,6 +1488,7 @@ bool Node::remove_dead_region(PhaseGVN *phase, bool can_reshape) {
 
 //------------------------------hash-------------------------------------------
 // Hash function over Nodes.
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 uint Node::hash() const {
   uint sum = 0;
   for( uint i=0; i<_cnt; i++ )  // Add in all inputs

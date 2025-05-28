@@ -81,6 +81,7 @@ ProjNode* MultiNode::proj_out(uint which_proj) const {
 
 //=============================================================================
 //------------------------------ProjNode---------------------------------------
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 uint ProjNode::hash() const {
   // only one input
   return (uintptr_t)in(TypeFunc::Control) + (_con << 1) + (_is_io_use ? 1 : 0);

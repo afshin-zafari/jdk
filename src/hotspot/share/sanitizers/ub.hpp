@@ -35,9 +35,11 @@
 #ifdef UNDEFINED_BEHAVIOR_SANITIZER
 #if defined(__clang__)
 #define ATTRIBUTE_NO_UBSAN __attribute__((no_sanitize("undefined","float-divide-by-zero")))
+#define ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE __attribute__((no_sanitize("unsigned-shift-base")))
 #endif
 #if defined(__GNUC__) && !defined(__clang__)
 #define ATTRIBUTE_NO_UBSAN __attribute__((no_sanitize("undefined")))
+#define ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 #endif
 #endif
 

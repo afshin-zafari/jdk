@@ -38,6 +38,7 @@
 #include "opto/phaseX.hpp"
 #include "opto/subnode.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "sanitizers/ub.hpp"
 #include "utilities/reverse_bits.hpp"
 
 // Portions of code courtesy of Clifford Click
@@ -1403,6 +1404,7 @@ BoolTest::mask BoolTest::merge(BoolTest other) const {
 }
 
 //=============================================================================
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 uint BoolNode::hash() const { return (Node::hash() << 3)|(_test._test+1); }
 uint BoolNode::size_of() const { return sizeof(BoolNode); }
 

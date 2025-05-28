@@ -35,7 +35,7 @@ inline uint32_t rotate_right_32(uint32_t x, int distance) {
     return x;
   }
 }
-
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 inline uint64_t rotate_right_64(uint64_t x, int distance) {
   distance = distance & 0x3F;
   if (distance > 0) {

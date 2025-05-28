@@ -26,6 +26,7 @@
 #define SHARE_OOPS_SYMBOL_HPP
 
 #include "memory/allocation.hpp"
+#include "sanitizers/ub.hpp"
 #include "utilities/exceptions.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/vmEnums.hpp"
@@ -153,6 +154,7 @@ class Symbol : public MetaspaceObj {
 
   // Returns the largest size symbol we can safely hold.
   static int max_length() { return max_symbol_length; }
+  ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
   unsigned identity_hash() const {
     unsigned addr_bits = (unsigned)((uintptr_t)this >> LogBytesPerWord);
     return ((unsigned)extract_hash(_hash_and_refcount) & 0xffff) |

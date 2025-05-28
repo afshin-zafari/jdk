@@ -29,6 +29,7 @@
 #include "immediate_aarch64.hpp"
 #include "memory/resourceArea.hpp"
 #include "metaprogramming/primitiveConversions.hpp"
+#include "sanitizers/ub.hpp"
 
 #ifndef PRODUCT
 const uintptr_t Assembler::asm_bp = 0x0000ffffac221240;
@@ -485,6 +486,7 @@ asm_util::encode_logical_immediate(bool is32, uint64_t imm)
   return encoding_for_logical_immediate(imm);
 }
 
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 uint32_t
 asm_util::encode_sve_logical_immediate(unsigned elembits, uint64_t imm) {
   guarantee(elembits == 8 || elembits == 16 ||

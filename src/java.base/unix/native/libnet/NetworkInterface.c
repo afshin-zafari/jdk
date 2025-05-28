@@ -43,6 +43,12 @@
 #include <ifaddrs.h>
 #endif
 
+#if defined(__clang__)
+#define ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE __attribute__((no_sanitize("unsigned-shift-base")))
+#else
+#define ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
+#endif
+
 #include "net_util.h"
 
 #include "java_net_InetAddress.h"
@@ -1063,6 +1069,7 @@ static netif *addif(JNIEnv *env, int sock, const char *if_name, netif *ifs,
 /*
  * Determines the prefix value for an AF_INET subnet address.
  */
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 static short translateIPv4AddressToPrefix(struct sockaddr_in *addr) {
     short prefix = 0;
     unsigned int mask;

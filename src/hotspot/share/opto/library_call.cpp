@@ -4275,6 +4275,7 @@ bool LibraryCallKit::inline_native_subtype_check() {
 }
 
 //---------------------generate_array_guard_common------------------------
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 Node* LibraryCallKit::generate_array_guard_common(Node* kls, RegionNode* region,
                                                   bool obj_array, bool not_array, Node** obj) {
 

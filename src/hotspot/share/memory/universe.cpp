@@ -79,6 +79,7 @@
 #include "runtime/threads.hpp"
 #include "runtime/timerTrace.hpp"
 #include "sanitizers/leak.hpp"
+#include "sanitizers/ub.hpp"
 #include "services/memoryService.hpp"
 #include "utilities/align.hpp"
 #include "utilities/autoRestore.hpp"
@@ -1289,6 +1290,7 @@ void Universe::verify(VerifyOption option, const char* prefix) {
 
 
 #ifndef PRODUCT
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 void Universe::calculate_verify_data(HeapWord* low_boundary, HeapWord* high_boundary) {
   assert(low_boundary < high_boundary, "bad interval");
 

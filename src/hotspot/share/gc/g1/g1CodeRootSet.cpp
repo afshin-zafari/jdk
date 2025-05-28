@@ -92,6 +92,7 @@ public:
 
   // Robert Jenkins 1996 & Thomas Wang 1997
   // http://web.archive.org/web/20071223173210/http://www.concentric.net/~Ttwang/tech/inthash.htm
+  ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
   static uint32_t hash(uint32_t key) {
     key = ~key + (key << 15);
     key = key ^ (key >> 12);

@@ -58,6 +58,7 @@
 #include "runtime/trimNativeHeap.hpp"
 #include "runtime/vframe.hpp"
 #include "runtime/vmThread.hpp"
+#include "sanitizers/ub.hpp"
 #include "utilities/align.hpp"
 #include "utilities/dtrace.hpp"
 #include "utilities/events.hpp"
@@ -924,7 +925,7 @@ static markWord read_stable_mark(oop obj) {
 //   result in hashtable collisions and reduced hashtable efficiency.
 //   There are simple ways to "diffuse" the middle address bits over the
 //   generated hashCode values:
-
+ATTRIBUTE_NO_UBSAN_UNSIGNED_SHIFT_BASE
 static intptr_t get_next_hash(Thread* current, oop obj) {
   intptr_t value = 0;
   if (hashCode == 0) {
