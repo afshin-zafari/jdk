@@ -522,6 +522,7 @@ protected:
     // The usual form is (x & -x), but VS warns (C4146) about unary minus of unsigned.
     // So use alternate form of negation to avoid warning.
     uint result = candidates & (~candidates + 1);
+    // all bits to the right of the diff bit should be 0
     assert(((result - 1) & result) == 0, "post-condition");
     return static_cast<int>(result);
   }
