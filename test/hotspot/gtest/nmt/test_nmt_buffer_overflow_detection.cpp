@@ -36,14 +36,14 @@
 // come, just use this one.
 #define COMMON_NMT_HEAP_CORRUPTION_MESSAGE_PREFIX "NMT has detected a memory corruption bug."
 
-#define REGEXP_UNION(x, y) ::testing::AnyOf(x, y)
-#define REGEXP_CONTAINS(x) ::testing::ContainsRegex(x)
+#define MATCHER_UNION(x, y) ::testing::AnyOf(x, y)
+#define MATCHER_CONTAINS(x) ::testing::ContainsRegex(x)
 // Since gtest regular expressions do not support unions (a|b), AnyOf() matcher is used.
-#define DEFINE_TEST_REGEX(test_function, x, y)                                            \
+#define DEFINE_TEST_ANYOF(test_function, x, y)                                            \
 TEST_VM_FATAL_ERROR_MSG(NMT,                                                              \
                         test_function,                                                    \
-                        (REGEXP_UNION(REGEXP_CONTAINS(x),                                 \
-                                      REGEXP_CONTAINS(y)))) {                             \
+                        (MATCHER_UNION(MATCHER_CONTAINS(x),                               \
+                                       MATCHER_CONTAINS(y)))) {                           \
   if (MemTracker::tracking_level() > NMT_off) {                                           \
     tty->print_cr("NMT overwrite death test, please ignore subsequent error dump.");      \
     test_function ();                                                                     \
@@ -55,7 +55,7 @@ TEST_VM_FATAL_ERROR_MSG(NMT,                                                    
 }
 
 #define DEFINE_TEST(test_function, expected_assertion_message)                            \
-  DEFINE_TEST_REGEX(test_function, expected_assertion_message, "")
+  DEFINE_TEST_ANYOF(test_function, expected_assertion_message, "")
 ///////
 
 #if !INCLUDE_ASAN
@@ -114,7 +114,7 @@ static void test_double_free() {
 // - "header canary broken" or
 // - "header canary dead (double free?)".
 // In case of concurrent access, we may exit with signal instead.
-DEFINE_TEST_REGEX(test_double_free, "header canary", "SIG")
+DEFINE_TEST_ANYOF(test_double_free, "header canary", NOT_WINDOWS("SIG") WINDOWS_ONLY("Exception Access Violation"))
 
 
 ///////
