@@ -114,7 +114,7 @@ static void test_double_free() {
 // - "header canary broken" or
 // - "header canary dead (double free?)".
 // In case of concurrent access, we may exit with signal instead.
-DEFINE_TEST_ANYOF(test_double_free, "header canary", NOT_WINDOWS("SIG") WINDOWS_ONLY("Exception Access Violation"))
+DEFINE_TEST_ANYOF(test_double_free, "header canary", NOT_WINDOWS("SIG") WINDOWS_ONLY("EXCEPTION"))
 
 
 ///////
