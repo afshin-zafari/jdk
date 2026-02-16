@@ -202,7 +202,7 @@ class VirtualMemoryRegion {
 
  public:
   VirtualMemoryRegion() :
-    _base_address(0), _size(0), _mem_tag(mtNone),
+    _base_address(nullptr), _size(0), _mem_tag(mtNone),
     _reserved_stack(NativeCallStack::empty_stack()) ,
     _committed_stack(NativeCallStack::empty_stack()) {}
 
