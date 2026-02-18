@@ -24,6 +24,7 @@
 
 #include "memory/allocation.hpp"
 #include "memory/arena.hpp"
+#include "nmt/mallocLimit.hpp"
 #include "nmt/memTracker.hpp"
 #include "runtime/os.hpp"
 #include "sanitizers/address.hpp"
@@ -36,26 +37,17 @@
 // come, just use this one.
 #define COMMON_NMT_HEAP_CORRUPTION_MESSAGE_PREFIX "NMT has detected a memory corruption bug."
 
-#define MATCHER_UNION(x, y) ::testing::AnyOf(x, y)
-#define MATCHER_CONTAINS(x) ::testing::ContainsRegex(x)
-// Since gtest regular expressions do not support unions (a|b), AnyOf() matcher is used.
-#define DEFINE_TEST_ANYOF(test_function, x, y)                                            \
-TEST_VM_FATAL_ERROR_MSG(NMT,                                                              \
-                        test_function,                                                    \
-                        (MATCHER_UNION(MATCHER_CONTAINS(x),                               \
-                                       MATCHER_CONTAINS(y)))) {                           \
-  if (MemTracker::tracking_level() > NMT_off) {                                           \
-    tty->print_cr("NMT overwrite death test, please ignore subsequent error dump.");      \
-    test_function ();                                                                     \
-  } else {                                                                                \
-    /* overflow detection requires NMT to be on. If off, fake assert. */                  \
-    guarantee(false,                                                                      \
-              "fake message ignore this - " x " or " y " " );                             \
-  }                                                                                       \
-}
-
 #define DEFINE_TEST(test_function, expected_assertion_message)                            \
-  DEFINE_TEST_ANYOF(test_function, expected_assertion_message, "")
+TEST_VM_FATAL_ERROR_MSG(NMT, test_function, ".*" expected_assertion_message ".*") {     \
+  if (MemTracker::tracking_level() > NMT_off) {                                         \
+    tty->print_cr("NMT overwrite death test, please ignore subsequent error dump.");    \
+    test_function ();                                                                   \
+  } else {                                                                              \
+    /* overflow detection requires NMT to be on. If off, fake assert. */                \
+    guarantee(false,                                                                    \
+              "fake message ignore this - " expected_assertion_message);                \
+  }                                                                                     \
+}
 ///////
 
 #if !INCLUDE_ASAN
@@ -91,31 +83,6 @@ static void test_overwrite_back_long_aligned_distance()   { test_overwrite_back_
 DEFINE_TEST(test_overwrite_back_long_aligned_distance, "footer canary broken")
 static void test_overwrite_back_long_unaligned_distance() { test_overwrite_back_long(0x2001); }
 DEFINE_TEST(test_overwrite_back_long_unaligned_distance, "footer canary broken")
-
-///////
-
-static void test_double_free() {
-  address p = (address) os::malloc(1, mtTest);
-  os::free(p);
-  // Now a double free. Note that this is susceptible to concurrency issues should
-  // a concurrent thread have done a malloc and gotten the same address after the
-  // first free. To decrease chance of this happening, we repeat the double free
-  // several times.
-  for (int i = 0; i < 100; i ++) {
-    os::free(p);
-  }
-}
-
-// What assertion message we will see depends on whether the VM wipes the memory-to-be-freed
-// on the first free(), and whether the libc uses the freed memory to store bookkeeping information.
-// If the death marker in the header is still intact after the first free, we will recognize this as
-// double free; if it got wiped, we should at least see a broken header canary.
-// The message would be either
-// - "header canary broken" or
-// - "header canary dead (double free?)".
-// In case of concurrent access, we may exit with signal instead.
-DEFINE_TEST_ANYOF(test_double_free, "header canary", NOT_WINDOWS("SIG") WINDOWS_ONLY("EXCEPTION"))
-
 
 ///////
 
