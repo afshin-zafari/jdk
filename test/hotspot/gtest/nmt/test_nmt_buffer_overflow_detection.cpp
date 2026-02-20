@@ -36,7 +36,7 @@
 // come, just use this one.
 #define COMMON_NMT_HEAP_CORRUPTION_MESSAGE_PREFIX "NMT has detected a memory corruption bug."
 
-#define DEFINE_TEST(test_function, expected_assertion_message)                            \
+#define DEFINE_TEST(test_function, expected_assertion_message)                          \
 TEST_VM_FATAL_ERROR_MSG(NMT, test_function, ".*" expected_assertion_message ".*") {     \
   if (MemTracker::tracking_level() > NMT_off) {                                         \
     tty->print_cr("NMT overwrite death test, please ignore subsequent error dump.");    \
