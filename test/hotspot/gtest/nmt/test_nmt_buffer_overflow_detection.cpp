@@ -24,7 +24,6 @@
 
 #include "memory/allocation.hpp"
 #include "memory/arena.hpp"
-#include "nmt/mallocLimit.hpp"
 #include "nmt/memTracker.hpp"
 #include "runtime/os.hpp"
 #include "sanitizers/address.hpp"
