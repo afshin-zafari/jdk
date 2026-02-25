@@ -29,6 +29,7 @@
 #include "nmt/regionsTree.hpp"
 #include "nmt/vmatree.hpp"
 #include "runtime/atomicAccess.hpp"
+#include "utilities/deferredStatic.hpp"
 #include "utilities/nativeCallStack.hpp"
 #include "utilities/ostream.hpp"
 
@@ -108,7 +109,7 @@ class VirtualMemorySnapshot : public ResourceObj {
   friend class VirtualMemorySummary;
 
  private:
-  VirtualMemory  _virtual_memory[mt_number_of_tags];
+  VirtualMemory  _virtual_memory[NMTUtil::max_number_of_tags()];
 
  public:
   inline VirtualMemory* by_tag(MemTag mem_tag) {
@@ -123,7 +124,7 @@ class VirtualMemorySnapshot : public ResourceObj {
 
   inline size_t total_reserved() const {
     size_t amount = 0;
-    for (int index = 0; index < mt_number_of_tags; index ++) {
+    for (int index = 0; index < NMTUtil::max_number_of_tags(); index ++) {
       amount += _virtual_memory[index].reserved();
     }
     return amount;
@@ -131,14 +132,14 @@ class VirtualMemorySnapshot : public ResourceObj {
 
   inline size_t total_committed() const {
     size_t amount = 0;
-    for (int index = 0; index < mt_number_of_tags; index ++) {
+    for (int index = 0; index < NMTUtil::max_number_of_tags(); index ++) {
       amount += _virtual_memory[index].committed();
     }
     return amount;
   }
 
   void copy_to(VirtualMemorySnapshot* s) {
-    for (int index = 0; index < mt_number_of_tags; index ++) {
+    for (int index = 0; index < NMTUtil::max_number_of_tags(); index ++) {
       s->_virtual_memory[index] = _virtual_memory[index];
     }
   }
@@ -180,11 +181,15 @@ class VirtualMemorySummary : AllStatic {
   static void snapshot(VirtualMemorySnapshot* s);
 
   static VirtualMemorySnapshot* as_snapshot() {
-    return &_snapshot;
+    return _snapshot.get();
+  }
+
+  static void initialize() {
+    _snapshot.initialize();
   }
 
  private:
-  static VirtualMemorySnapshot _snapshot;
+  static DeferredStatic<VirtualMemorySnapshot> _snapshot;
 };
 
 

@@ -245,11 +245,7 @@ public class SegmentFactories {
     }
 
     private static long allocateMemoryWrapper(long size) {
-        try {
-            return UNSAFE.allocateMemory(size);
-        } catch (IllegalArgumentException ex) {
-            throw new OutOfMemoryError();
-        }
+        return UNSAFE.allocateMemory(size);
     }
 
     public static MappedMemorySegmentImpl mapSegment(long size, UnmapperProxy unmapper, boolean readOnly, MemorySessionImpl sessionImpl) {

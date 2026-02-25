@@ -352,6 +352,18 @@ public class Thread implements Runnable {
     }
 
     /*
+     * Native memory trags are maintained by the NativeMemoryTracking class.
+     */
+    private long nativeMemoryTrackingTag = 10; // Default value is mtOther
+
+    static long nativeMemoryTrackingTag() {
+        return currentThread().nativeMemoryTrackingTag;
+    }
+    static void setNativeMemoryTrackingTag(long tag) {
+        currentThread().nativeMemoryTrackingTag = tag;
+    }
+
+    /*
      * Scoped value bindings are maintained by the ScopedValue class.
      */
     private Object scopedValueBindings;

@@ -25,6 +25,7 @@
 
 #include "nmt/mallocLimit.hpp"
 #include "nmt/memTag.hpp"
+#include "nmt/memTagFactory.hpp"
 #include "nmt/nmtCommon.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/java.hpp"
@@ -32,7 +33,7 @@
 #include "utilities/ostream.hpp"
 #include "utilities/parseInteger.hpp"
 
-MallocLimitSet MallocLimitHandler::_limits;
+DeferredStatic<MallocLimitSet> MallocLimitHandler::_limits;
 bool MallocLimitHandler::_have_limit = false;
 
 static const char* const MODE_OOM = "oom";
@@ -48,6 +49,7 @@ static const char* mode_to_name(MallocLimitMode m) {
 }
 
 class ParserHelper {
+  MemTagIterator& _iterator;
   // Start, end of parsed string.
   const char* const _s;
   const char* const _end;
@@ -55,7 +57,7 @@ class ParserHelper {
   const char* _p;
 
 public:
-  ParserHelper(const char* s) : _s(s), _end(s + strlen(s)), _p(s) {}
+  ParserHelper(const char* s, MemTagIterator& mts) : _iterator(mts), _s(s), _end(s + strlen(s)), _p(s) {}
 
   bool eof() const { return _p >= _end; }
 
@@ -89,10 +91,23 @@ public:
     }
     stringStream ss;
     ss.print("%.*s", (int)(end - _p), _p);
-    MemTag mem_tag = NMTUtil::string_to_mem_tag(ss.base());
-    if (mem_tag != mtNone) {
-      *out = mem_tag;
-      _p = end;
+    MemTag out_tag = mtNone;
+
+    auto iter = [&](MemTag tag, const char* name, const char* hrn) {
+      if ((hrn == nullptr ? false : ::strcasecmp(hrn, ss.base()) == 0)      ||
+          ::strcasecmp(name, ss.base()) == 0     ||
+          ((*name != '\0' && name[1] != '\0') ?  ::strcasecmp(name + 2, ss.base()) == 0 : false)
+          ) {
+        out_tag = tag;
+        return false;
+      }
+      return true;
+    };
+    _iterator.iterate_tags(iter);
+
+    if (out_tag != mtNone) {
+      *out = out_tag;
+      _p  = end;
       return true;
     }
     return false;
@@ -122,7 +137,7 @@ public:
   }
 };
 
-MallocLimitSet::MallocLimitSet() {
+MallocLimitSet::MallocLimitSet(MemTagIterator& iter) : _iterator(iter) {
   reset();
 }
 
@@ -138,7 +153,7 @@ void MallocLimitSet::set_category_limit(MemTag mem_tag, size_t s, MallocLimitMod
 void MallocLimitSet::reset() {
   set_global_limit(0, MallocLimitMode::trigger_fatal);
   _glob.sz = 0; _glob.mode = MallocLimitMode::trigger_fatal;
-  for (int i = 0; i < mt_number_of_tags; i++) {
+  for (int i = 0; i < NMTUtil::max_number_of_tags(); i++) {
     set_category_limit(NMTUtil::index_to_tag(i), 0, MallocLimitMode::trigger_fatal);
   }
 }
@@ -148,7 +163,7 @@ void MallocLimitSet::print_on(outputStream* st) const {
     st->print_cr("MallocLimit: total limit: " PROPERFMT " (%s)", PROPERFMTARGS(_glob.sz),
                  mode_to_name(_glob.mode));
   } else {
-    for (int i = 0; i < mt_number_of_tags; i++) {
+    for (int i = 0; i < NMTUtil::max_number_of_tags(); i++) {
       if (_mtag[i].sz > 0) {
         st->print_cr("MallocLimit: category \"%s\" limit: " PROPERFMT " (%s)",
                      NMTUtil::tag_to_enum_name(NMTUtil::index_to_tag(i)),
@@ -170,7 +185,7 @@ bool MallocLimitSet::parse_malloclimit_option(const char* v, const char** err) {
 
   reset();
 
-  ParserHelper sst(v);
+  ParserHelper sst(v, _iterator);
 
   BAIL_UNLESS(!sst.eof(), "Empty string");
 
@@ -210,20 +225,26 @@ bool MallocLimitSet::parse_malloclimit_option(const char* v, const char** err) {
   return true;
 }
 
-void MallocLimitHandler::initialize(const char* options) {
+void MallocLimitHandler::reset(const char *options) {
+  _limits->reset();
   _have_limit = false;
   if (options != nullptr && options[0] != '\0') {
     const char* err = nullptr;
-    if (!_limits.parse_malloclimit_option(options, &err)) {
+    if (!_limits->parse_malloclimit_option(options, &err)) {
       vm_exit_during_initialization("Failed to parse MallocLimit", err);
     }
     _have_limit = true;
   }
 }
 
+void MallocLimitHandler::initialize(const char* options) {
+  _limits.initialize(MemTagFactory::iterator());
+  reset(options);
+}
+
 void MallocLimitHandler::print_on(outputStream* st) {
   if (have_limit()) {
-    _limits.print_on(st);
+    _limits->print_on(st);
   } else {
     st->print_cr("MallocLimit: unset");
   }

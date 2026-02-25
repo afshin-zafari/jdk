@@ -28,6 +28,7 @@
 
 #include "memory/allStatic.hpp"
 #include "nmt/memTag.hpp"
+#include "nmt/nmtCommon.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/globalDefinitions.hpp"
 
@@ -45,12 +46,14 @@ struct malloclimit {
 class outputStream;
 
 class MallocLimitSet {
-  malloclimit _glob;                    // global limit
-  malloclimit _mtag[mt_number_of_tags]; // per-memtag limit
+  MemTagIterator& _iterator;
+  malloclimit _glob;                                // global limit
+  malloclimit _mtag[NMTUtil::max_number_of_tags()]; // per-memtag limit
 public:
-  MallocLimitSet();
+  MallocLimitSet(MemTagIterator& iterator);
 
   void reset();
+
   bool parse_malloclimit_option(const char* optionstring, const char** err);
 
   void set_global_limit(size_t s, MallocLimitMode type);
@@ -63,14 +66,15 @@ public:
 };
 
 class MallocLimitHandler : public AllStatic {
-  static MallocLimitSet _limits;
+  static DeferredStatic<MallocLimitSet> _limits;
   static bool _have_limit; // shortcut
 
 public:
 
-  static const malloclimit* global_limit()             { return _limits.global_limit(); }
-  static const malloclimit* mem_tag_limit(MemTag mem_tag) { return _limits.mem_tag_limit(mem_tag); }
+  static const malloclimit* global_limit()             { return _limits->global_limit(); }
+  static const malloclimit* mem_tag_limit(MemTag mem_tag) { return _limits->mem_tag_limit(mem_tag); }
 
+  static void reset(const char* options);
   static void initialize(const char* options);
   static void print_on(outputStream* st);
 

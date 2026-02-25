@@ -2351,6 +2351,14 @@ public final class System {
             public void finishInit(StackTraceElement[] stackTrace) {
                 StackTraceElement.finishInit(stackTrace);
             }
+
+            public long nativeMemoryTrackingTag() {
+                return Thread.nativeMemoryTrackingTag();
+            }
+
+            public void setNativeMemoryTrackingTag(long tag) {
+                Thread.setNativeMemoryTrackingTag(tag);
+            }
         });
     }
 }

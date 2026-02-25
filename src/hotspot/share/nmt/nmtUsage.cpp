@@ -68,7 +68,7 @@ void NMTUsage::update_malloc_usage() {
   }
 
   size_t total_arena_size = 0;
-  for (int i = 0; i < mt_number_of_tags; i++) {
+  for (int i = 0; i < NMTUtil::max_number_of_tags(); i++) {
     MemTag mem_tag = NMTUtil::index_to_tag(i);
     const MallocMemory* mm = ms->by_tag(mem_tag);
     _malloc_by_type[i] = mm->malloc_size() + mm->arena_size();
@@ -92,7 +92,7 @@ void NMTUsage::update_vm_usage() {
   // Reset total to allow recalculation.
   _vm_total.committed = 0;
   _vm_total.reserved = 0;
-  for (int i = 0; i < mt_number_of_tags; i++) {
+  for (int i = 0; i < NMTUtil::max_number_of_tags(); i++) {
     MemTag mem_tag = NMTUtil::index_to_tag(i);
     const VirtualMemory* vm = vms->by_tag(mem_tag);
 

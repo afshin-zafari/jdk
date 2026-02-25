@@ -27,6 +27,7 @@
 
 #include "memory/allocation.hpp"
 #include "nmt/memTag.hpp"
+#include "nmt/nmtCommon.hpp"
 #include "utilities/globalDefinitions.hpp"
 
 struct NMTUsagePair {
@@ -42,9 +43,9 @@ struct NMTUsageOptions {
 
 class NMTUsage : public CHeapObj<mtNMT> {
 private:
-  size_t _malloc_by_type[mt_number_of_tags];
+  size_t _malloc_by_type[NMTUtil::max_number_of_tags()];
   size_t _malloc_total;
-  NMTUsagePair _vm_by_type[mt_number_of_tags];
+  NMTUsagePair _vm_by_type[NMTUtil::max_number_of_tags()];
   NMTUsagePair _vm_total;
 
   NMTUsageOptions _usage_options;

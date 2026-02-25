@@ -150,7 +150,7 @@ class MallocMemorySnapshot {
   friend class MallocMemorySummary;
 
  private:
-  MallocMemory      _malloc[mt_number_of_tags];
+  MallocMemory      _malloc[NMTUtil::max_number_of_tags()];
   MemoryCounter     _all_mallocs;
 
 

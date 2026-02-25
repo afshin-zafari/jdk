@@ -247,10 +247,10 @@ bool MappingPrintSession::print_nmt_info_for_region(const void* vma_from, const 
   if (MemTracker::enabled()) {
     // Correlate vma region (from, to) with NMT region(s) we collected previously.
     ResourceMark rm;
-    ResourceBitMap flags(mt_number_of_tags);
+    ResourceBitMap flags(NMTUtil::max_number_of_tags());
     _nmt_info.lookup(vma_from, vma_to, flags);
     if (!flags.is_empty()) {
-      for (int i = 0; i < mt_number_of_tags; i++) {
+      for (int i = 0; i < NMTUtil::max_number_of_tags(); i++) {
         const MemTag mem_tag = (MemTag)i;
         if (flags.at((BitMap::idx_t)mem_tag)) {
           if (num_printed > 0) {

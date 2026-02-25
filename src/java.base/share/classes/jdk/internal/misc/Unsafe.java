@@ -25,6 +25,7 @@
 
 package jdk.internal.misc;
 
+import jdk.internal.foreign.NativeMemoryTracking;
 import jdk.internal.vm.annotation.AOTRuntimeSetup;
 import jdk.internal.vm.annotation.AOTSafeClassInitializer;
 import jdk.internal.vm.annotation.ForceInline;
@@ -637,7 +638,7 @@ public final class Unsafe {
             return 0;
         }
 
-        long p = allocateMemory0(bytes);
+        long p = NativeMemoryTracking.allocate(bytes);
         if (p == 0) {
             throw new OutOfMemoryError("Unable to allocate " + bytes + " bytes");
         }

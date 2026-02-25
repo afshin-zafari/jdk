@@ -25,6 +25,7 @@
 #include "jfr/jfrEvents.hpp"
 #include "jfr/periodic/jfrNativeMemoryEvent.hpp"
 #include "nmt/memTracker.hpp"
+#include "nmt/nmtCommon.hpp"
 #include "nmt/nmtUsage.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/ticks.hpp"
@@ -77,8 +78,8 @@ void JfrNativeMemoryEvent::send_type_events(const Ticks& timestamp) {
   }
 
   NMTUsage* usage = get_usage(timestamp);
-
-  for (int index = 0; index < mt_number_of_tags; index ++) {
+  int num_tags = NMTUtil::max_number_of_tags();
+  for (int index = 0; index < num_tags; index++) {
     MemTag mem_tag = NMTUtil::index_to_tag(index);
     if (mem_tag == mtNone) {
       // Skip mtNone since it is not really used.

@@ -659,4 +659,13 @@ public interface JavaLangAccess {
      * Finish initialization of the StackTraceElement objects in a stack trace.
      */
     void finishInit(StackTraceElement[] stackTrace);
+
+    /**
+      * Get the current thread's NMT tag
+       */
+    long nativeMemoryTrackingTag();
+    /**
+     * Set the current thread's NMT tag
+     */
+    void setNativeMemoryTrackingTag(long tag);
 }

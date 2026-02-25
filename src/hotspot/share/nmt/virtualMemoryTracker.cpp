@@ -30,7 +30,7 @@
 #include "utilities/ostream.hpp"
 
 VirtualMemoryTracker* VirtualMemoryTracker::Instance::_tracker = nullptr;
-VirtualMemorySnapshot VirtualMemorySummary::_snapshot;
+DeferredStatic<VirtualMemorySnapshot> VirtualMemorySummary::_snapshot;
 
 void VirtualMemory::update_peak(size_t size) {
   size_t peak_sz = peak_size();

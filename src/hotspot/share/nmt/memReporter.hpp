@@ -43,6 +43,16 @@ class MemReporterBase : public StackObj {
 
  public:
 
+  static const char* name_for(MemTag mem_tag) {
+    // Dynamically added memtags may not have a 'human readable' name,
+    // then we go back to enum names
+    const char* name = NMTUtil::tag_to_name(mem_tag);
+    if (name == nullptr) {
+      name = NMTUtil::tag_to_enum_name(mem_tag);
+    }
+    return name;
+  }
+
   // Default scale to use if no scale given.
   static const size_t default_scale = K;
 

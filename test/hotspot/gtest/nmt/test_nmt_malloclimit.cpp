@@ -42,7 +42,7 @@ static bool compare_limits(const malloclimit* a, const malloclimit* b) {
 
 static bool compare_sets(const MallocLimitSet* a, const MallocLimitSet* b) {
   if (compare_limits(a->global_limit(), b->global_limit())) {
-    for (int i = 0; i < mt_number_of_tags; i++) {
+    for (int i = 0; i < NMTUtil::max_number_of_tags(); i++) {
       if (!compare_limits(a->mem_tag_limit(NMTUtil::index_to_tag(i)),
                           b->mem_tag_limit(NMTUtil::index_to_tag(i)))) {
         return false;
@@ -53,14 +53,18 @@ static bool compare_sets(const MallocLimitSet* a, const MallocLimitSet* b) {
 }
 
 static void test(const char* s, const MallocLimitSet& expected) {
-  MallocLimitSet set;
+  MemTagFactory::Instance mtf;
+  MemTagFactory::Instance::Iterator iter = mtf.iterator();
+  MallocLimitSet set(iter);
   const char* err;
   EXPECT_TRUE(set.parse_malloclimit_option(s, &err)) << err;
   EXPECT_TRUE(compare_sets(&set, &expected));
 }
 
 TEST(NMT, MallocLimitBasics) {
-  MallocLimitSet expected;
+  MemTagFactory::Instance mtf;
+  MemTagFactory::Instance::Iterator iter = mtf.iterator();
+  MallocLimitSet expected(iter);
 
   expected.set_global_limit(1 * G, MallocLimitMode::trigger_fatal);
   test("1g", expected);
@@ -78,7 +82,9 @@ TEST(NMT, MallocLimitBasics) {
 }
 
 TEST(NMT, MallocLimitPerCategory) {
-  MallocLimitSet expected;
+  MemTagFactory::Instance mtf;
+  MemTagFactory::Instance::Iterator iter = mtf.iterator();
+  MallocLimitSet expected(iter);
 
   expected.set_category_limit(mtMetaspace, 1 * M, MallocLimitMode::trigger_fatal);
   test("metaspace:1m", expected);
@@ -94,33 +100,42 @@ TEST(NMT, MallocLimitPerCategory) {
 }
 
 TEST(NMT, MallocLimitMemTagEnumNames) {
-  MallocLimitSet expected;
+  MemTagFactory::Instance mtf;
+  MemTagFactory::Instance::Iterator iter = mtf.iterator();
+  MallocLimitSet expected(iter);
+
   stringStream option;
-  for (int i = 0; i < mt_number_of_tags; i++) {
+  for (int i = 0; i < NMTUtil::number_of_enum_tags(); i++) {
     MemTag mem_tag = NMTUtil::index_to_tag(i);
     if (mem_tag != MemTag::mtNone) {
       expected.set_category_limit(mem_tag, (i + 1) * M, MallocLimitMode::trigger_fatal);
-      option.print("%s%s:%dM", (i > 0 ? "," : ""), NMTUtil::tag_to_enum_name(mem_tag), i + 1);
+      option.print("%s%s:%dM", (i > 0 ? "," : ""), mtf.name_of(mem_tag), i + 1);
     }
   }
   test(option.base(), expected);
 }
 
 TEST(NMT, MallocLimitAllCategoriesHaveHumanReadableNames) {
-  MallocLimitSet expected;
+  MemTagFactory::Instance mtf;
+  MemTagFactory::Instance::Iterator iter = mtf.iterator();
+  MallocLimitSet expected(iter);
+
   stringStream option;
-  for (int i = 0; i < mt_number_of_tags; i++) {
+  for (int i = 0; i < NMTUtil::number_of_enum_tags(); i++) {
     MemTag mem_tag = NMTUtil::index_to_tag(i);
     if (mem_tag != MemTag::mtNone) {
       expected.set_category_limit(mem_tag, (i + 1) * M, MallocLimitMode::trigger_fatal);
-      option.print("%s%s:%dM", (i > 0 ? "," : ""), NMTUtil::tag_to_name(mem_tag), i + 1);
+      option.print("%s%s:%dM", (i > 0 ? "," : ""), mtf.name_of(mem_tag), i + 1);
     }
   }
   test(option.base(), expected);
 }
 
 static void test_failing(const char* s) {
-  MallocLimitSet set;
+  MemTagFactory::Instance mtf;
+  MemTagFactory::Instance::Iterator iter = mtf.iterator();
+  MallocLimitSet set(iter);
+
   const char* err;
   ASSERT_FALSE(set.parse_malloclimit_option(s, &err));
 }
@@ -140,7 +155,7 @@ TEST_VM_FATAL_ERROR_MSG(NMT, MallocLimitDeathTestOnRealloc, ".*MallocLimit: reac
     fatal("Fake message please ignore: MallocLimit: reached category \"mtTest\" limit");
   }
   // the real test
-  MallocLimitHandler::initialize("test:100m:fatal");
+  MallocLimitHandler::reset("test:100m:fatal");
   char* p = (char*)os::malloc(2, mtTest);
   p = (char*)os::realloc(p, 120 * M, mtTest);
 }
@@ -151,7 +166,7 @@ TEST_VM_FATAL_ERROR_MSG(NMT, MallocLimitDeathTestOnStrDup, ".*MallocLimit: reach
     fatal("Fake message please ignore: MallocLimit: reached category \"mtTest\" limit");
   }
   // the real test
-  MallocLimitHandler::initialize("test:10m:fatal");
+  MallocLimitHandler::reset("test:10m:fatal");
   for (int i = 0; i < 100000; i++) {
     char* p = os::strdup("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", mtTest);
   }
@@ -163,7 +178,7 @@ TEST_VM_FATAL_ERROR_MSG(NMT, MallocLimitDeathTestOnArenaGrow, ".*MallocLimit in 
     fatal("Fake message please ignore: MallocLimit in Arena::grow");
   }
   // the real test
-  MallocLimitHandler::initialize("test:10m:oom");
+  MallocLimitHandler::reset("test:10m:oom");
   Arena ar(mtTest);
   ar.Amalloc(10 * M, AllocFailStrategy::EXIT_OOM);
 }
