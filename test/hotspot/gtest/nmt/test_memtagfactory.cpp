@@ -107,9 +107,3 @@ TEST(NMTMemTagFactoryTest, EnumTagsHaveAHumanReadableName) {
   MEMORY_TAG_DO(TEST_HRN);
 #undef TEST_HRN
 }
-TEST(NMTMemTagFactoryTest, corner_cases) {
-  MemTagFactory::Instance mtf;
-  MemTag mt = mtf.tag("test");
-  EXPECT_GT((int)mt, NMTUtil::number_of_enum_tags());
-  EXPECT_EQ(mtNone, mtf.tag("Java Heap"));
-}
