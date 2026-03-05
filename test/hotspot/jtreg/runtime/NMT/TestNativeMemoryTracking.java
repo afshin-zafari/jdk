@@ -27,6 +27,7 @@
  * @modules java.base/jdk.internal.foreign
  * @run testng/othervm
  *     --enable-native-access=ALL-UNNAMED
+ *     -XX:+UnlockDiagnosticVMOptions
  *     -XX:NativeMemoryTracking=summary
  *     -XX:+PrintNMTStatistics
  *     TestNativeMemoryTracking
@@ -61,6 +62,7 @@ public class TestNativeMemoryTracking {
             return;
         }
         ProcessBuilder pb = ProcessTools.createTestJavaProcessBuilder(
+            "-XX:+UnlockDiagnosticVMOptions",
             "-XX:NativeMemoryTracking=summary",
             "-XX:+PrintNMTStatistics",
             "TestNativeMemoryTracking",

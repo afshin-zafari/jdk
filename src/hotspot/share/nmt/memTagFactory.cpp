@@ -23,6 +23,7 @@
  */
 
 #include "utilities/macros.hpp"
+#include "utilities/nativeCallStack.hpp"
 
 #if INCLUDE_JFR
 #include "jfr/recorder/checkpoint/types/jfrType.hpp"
@@ -120,7 +121,7 @@ MemTagFactory::Instance::Instance()
   for (int i = 0; i < _table_size; i++) {
     _table[i] = Nil;
   }
-#define MEMORY_TAG_ADD_TO_TABLE(mem_tag, human_readable) this->tag(#mem_tag, human_readable);
+#define MEMORY_TAG_ADD_TO_TABLE(mem_tag, human_readable) this->tag(human_readable);
 MEMORY_TAG_DO(MEMORY_TAG_ADD_TO_TABLE)
 #undef MEMORY_TAG_ADD_TO_TABLE
 }
