@@ -29,6 +29,7 @@
 #include "nmt/memoryFileTracker.hpp"
 #include "nmt/memReporter.hpp"
 #include "nmt/memTag.hpp"
+#include "nmt/memTagFactory.hpp"
 #include "nmt/memTracker.hpp"
 #include "nmt/regionsTree.inline.hpp"
 #include "nmt/threadStackTracker.hpp"

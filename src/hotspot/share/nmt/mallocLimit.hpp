@@ -30,6 +30,7 @@
 #include "nmt/memTag.hpp"
 #include "nmt/nmtCommon.hpp"
 #include "utilities/debug.hpp"
+#include "utilities/deferredStatic.hpp"
 #include "utilities/globalDefinitions.hpp"
 
 enum class MallocLimitMode {
@@ -46,11 +47,10 @@ struct malloclimit {
 class outputStream;
 
 class MallocLimitSet {
-  MemTagIterator& _iterator;
   malloclimit _glob;                                // global limit
   malloclimit _mtag[NMTUtil::max_number_of_tags()]; // per-memtag limit
 public:
-  MallocLimitSet(MemTagIterator& iterator);
+  MallocLimitSet();
 
   void reset();
 

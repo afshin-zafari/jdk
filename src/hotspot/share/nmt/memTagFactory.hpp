@@ -37,36 +37,12 @@
 #define SHARE_NMT_MEMTAGFACTORY_HPP
 
 
-class MemTagIterator {
-  virtual void iterate_tags_impl(void (*callback)(void* ctx, const MemTag, const char*, const char*),
-                                 void* ctx) = 0;
-public:
-    template<typename F>
-    void iterate_tags(F& f) {
-      auto trampoline = [](void* ctx, const MemTag tag, const char* name, const char* hrn) {
-            F* func = static_cast<F*>(ctx);
-            (*func)(tag, name, hrn);
-        };
-        iterate_tags_impl(trampoline, &f);
-    }
-};
-
 // NameToTagTable is a closed hashing hash table.
 // We don't expect MemTag creation or lookup to be a common operation, so we focus
 // on minimal memory usage.
-class MemTagFactory {
+class MemTagFactory : AllStatic {
 public:
   class Instance {
-  public:
-    class Iterator : public MemTagIterator {
-      MemTagFactory::Instance* _instance;
-      void iterate_tags_impl(void (*callback)(void *ctx, const MemTag,
-                                              const char *, const char *),
-                             void *ctx) override;
-    public:
-      Iterator(MemTagFactory::Instance* i) : _instance(i) {}
-    };
-
   private:
     using MemTagI = std::underlying_type_t<MemTag>;
     using EntryRef = std::underlying_type_t<MemTag>;
@@ -94,9 +70,8 @@ public:
     GrowableArrayCHeap<const char*, mtNMT> _human_readable_names;
     const uint64_t _seed;
     volatile int _number_of_tags;
-    Iterator _iterator;
 
-    void put_if_absent(MemTag tag, const char* name);
+    void put_tag(MemTag tag, const char* name);
     uint32_t string_hash(const char* t) const;
 
   public:
@@ -105,35 +80,20 @@ public:
     Instance();
     const char* name_of(MemTag tag) const;
     const char* human_readable_name_of(MemTag memtag) const;
-    MemTag tag_or_absent(const char* name) const;
+    MemTag tag_or_absent(const char* name);
     int number_of_tags() const;
 
     MemTag tag(const char* name, const char* human_name = nullptr);
     void set_human_readable_name_of(MemTag tag, const char* hrn);
-
-    Iterator& iterator() {
-      return _iterator;
-    }
   };
-
-  class Iterator : public MemTagIterator {
-    void iterate_tags_impl(void (*callback)(void *ctx, const MemTag,
-                                            const char *, const char *),
-                           void *ctx) override;
-  public:
-    Iterator() {}
-  };
-
 
   static DeferredStatic<Instance> _instance;
-  static DeferredStatic<Iterator> _iterator;
 
   constexpr static const MemTag AbsentTag = Instance::AbsentTag;
 
   static void initialize() {
     NmtMemTagLocker nvml;
     _instance.initialize();
-    _iterator.initialize();
   }
   static MemTag tag(const char* name) {
     NmtMemTagLocker nvml;
@@ -162,10 +122,6 @@ public:
   static MemTag tag_or_absent(const char* name) {
     NmtMemTagLocker ntml;
     return _instance->tag_or_absent(name);
-  }
-
-  static Iterator& iterator() {
-    return *_iterator.get();
   }
 
 };

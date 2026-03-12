@@ -42,7 +42,7 @@ JVM_ENTRY(jlong, NMT_makeTag(JNIEnv *env, jobject ignored_this, jobject tag_name
 }
 JVM_END
 
-JVM_ENTRY(long, NMT_allocate0(JNIEnv *env, jobject ignored_this, jlong size, jlong mem_tag)) {
+JVM_ENTRY(jlong, NMT_allocate0(JNIEnv *env, jobject ignored_this, jlong size, jlong mem_tag)) {
   if (size < 0) {
     return 0;
   }
@@ -59,13 +59,12 @@ JVM_ENTRY(long, NMT_allocate0(JNIEnv *env, jobject ignored_this, jlong size, jlo
 #endif
 
   MemTag tag = enabled ? (MemTag)mem_tag : mtOther;
-  size_t sz = (size_t)size;
-  return (jlong)os::malloc(sz, tag);
+  return (jlong)os::malloc(size, tag);
 }
 JVM_END
 
-JVM_ENTRY(bool, NMT_isNMTEnabled(JNIEnv *env, jobject ignored_this)) {
-  return MemTracker::enabled();
+JVM_ENTRY(jboolean, NMT_isNMTEnabled(JNIEnv *env, jobject ignored_this)) {
+  return (jboolean)MemTracker::enabled();
 }
 JVM_END
 

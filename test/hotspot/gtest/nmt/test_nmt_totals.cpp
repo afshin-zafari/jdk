@@ -24,6 +24,7 @@
 
 #include "memory/allocation.hpp"
 #include "nmt/mallocTracker.hpp"
+#include "nmt/memTagFactory.hpp"
 #include "nmt/memTracker.hpp"
 #include "runtime/os.hpp"
 #include "unittest.hpp"
@@ -89,6 +90,9 @@ TEST_VM(NMTNumbers, totals) {
   for (int i = 0; i < NUM_ALLOCS; i ++) {
     // spread over categories
     int mtag = i % (MemTagFactory::number_of_tags() - 1);
+    if (mtag == (int)mtNone) {
+      mtag++; // skip mtNone memtag
+    }
     p[i] = NEW_C_HEAP_ARRAY(char, ALLOC_SIZE, (MemTag)mtag);
   }
 

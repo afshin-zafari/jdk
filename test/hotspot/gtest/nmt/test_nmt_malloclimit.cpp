@@ -25,6 +25,7 @@
 #include "memory/allocation.hpp"
 #include "memory/arena.hpp"
 #include "nmt/mallocLimit.hpp"
+#include "nmt/memTagFactory.hpp"
 #include "nmt/memTracker.hpp"
 #include "nmt/nmtCommon.hpp"
 #include "runtime/os.hpp"
@@ -53,18 +54,18 @@ static bool compare_sets(const MallocLimitSet* a, const MallocLimitSet* b) {
 }
 
 static void test(const char* s, const MallocLimitSet& expected) {
-  MemTagFactory::Instance mtf;
-  MemTagFactory::Instance::Iterator iter = mtf.iterator();
-  MallocLimitSet set(iter);
+  if (!MemTracker::enabled()) {
+    tty->print_cr("Skipped");
+    return;
+  }
+  MallocLimitSet set;
   const char* err;
   EXPECT_TRUE(set.parse_malloclimit_option(s, &err)) << err;
   EXPECT_TRUE(compare_sets(&set, &expected));
 }
 
-TEST(NMT, MallocLimitBasics) {
-  MemTagFactory::Instance mtf;
-  MemTagFactory::Instance::Iterator iter = mtf.iterator();
-  MallocLimitSet expected(iter);
+TEST_VM(NMT, MallocLimitBasics) {
+  MallocLimitSet expected;
 
   expected.set_global_limit(1 * G, MallocLimitMode::trigger_fatal);
   test("1g", expected);
@@ -81,10 +82,8 @@ TEST(NMT, MallocLimitBasics) {
   test("2048k:oom", expected);
 }
 
-TEST(NMT, MallocLimitPerCategory) {
-  MemTagFactory::Instance mtf;
-  MemTagFactory::Instance::Iterator iter = mtf.iterator();
-  MallocLimitSet expected(iter);
+TEST_VM(NMT, MallocLimitPerCategory) {
+  MallocLimitSet expected;
 
   expected.set_category_limit(mtMetaspace, 1 * M, MallocLimitMode::trigger_fatal);
   test("metaspace:1m", expected);
@@ -99,52 +98,78 @@ TEST(NMT, MallocLimitPerCategory) {
   test("metaspace:1m,compiler:2m:oom,thread:3m:oom,threadstack:4m:oom,class:5m,classshared:6m", expected);
 }
 
-TEST(NMT, MallocLimitMemTagEnumNames) {
-  MemTagFactory::Instance mtf;
-  MemTagFactory::Instance::Iterator iter = mtf.iterator();
-  MallocLimitSet expected(iter);
+TEST_VM(NMT, MallocLimitMemTagEnumNames) {
+  MallocLimitSet expected;
 
   stringStream option;
   for (int i = 0; i < NMTUtil::number_of_enum_tags(); i++) {
     MemTag mem_tag = NMTUtil::index_to_tag(i);
     if (mem_tag != MemTag::mtNone) {
       expected.set_category_limit(mem_tag, (i + 1) * M, MallocLimitMode::trigger_fatal);
-      option.print("%s%s:%dM", (i > 0 ? "," : ""), mtf.name_of(mem_tag), i + 1);
+      option.print("%s%s:%dM", (i > 0 ? "," : ""), NMTUtil::tag_to_enum_name(mem_tag), i + 1);
     }
   }
   test(option.base(), expected);
 }
 
-TEST(NMT, MallocLimitAllCategoriesHaveHumanReadableNames) {
-  MemTagFactory::Instance mtf;
-  MemTagFactory::Instance::Iterator iter = mtf.iterator();
-  MallocLimitSet expected(iter);
+TEST_VM(NMT, MallocLimitAllCategoriesHaveHumanReadableNames) {
+  MallocLimitSet expected;
 
   stringStream option;
   for (int i = 0; i < NMTUtil::number_of_enum_tags(); i++) {
     MemTag mem_tag = NMTUtil::index_to_tag(i);
     if (mem_tag != MemTag::mtNone) {
       expected.set_category_limit(mem_tag, (i + 1) * M, MallocLimitMode::trigger_fatal);
-      option.print("%s%s:%dM", (i > 0 ? "," : ""), mtf.name_of(mem_tag), i + 1);
+      option.print("%s%s:%dM", (i > 0 ? "," : ""), NMTUtil::tag_to_name(mem_tag), i + 1);
     }
   }
   test(option.base(), expected);
 }
 
 static void test_failing(const char* s) {
-  MemTagFactory::Instance mtf;
-  MemTagFactory::Instance::Iterator iter = mtf.iterator();
-  MallocLimitSet set(iter);
+  MallocLimitSet set;
 
   const char* err;
   ASSERT_FALSE(set.parse_malloclimit_option(s, &err));
 }
 
-TEST(NMT, MallocLimitBadOptions) {
+TEST_VM(NMT, MallocLimitBadOptions) {
+  if (!MemTracker::enabled()) {
+    tty->print_cr("Skipped");
+    return;
+  }
   test_failing("abcd");
   test_failing("compiler:1g:");
   test_failing("compiler:1g:oom:mtTest:asas:1m");
+  test_failing("userDefinedWithout@AtStart:1m");
 }
+
+TEST_VM(NMT, MallocLimitUserDefinedTags) {
+  if (!MemTracker::enabled()) {
+    tty->print_cr("Skipped");
+    return;
+  }
+  MallocLimitSet set;
+  const char* err;
+  EXPECT_TRUE(set.parse_malloclimit_option("@userDefinedTag:1m:oom", &err)) << err;
+  MemTag mt = MemTagFactory::tag_or_absent("userDefinedTag");
+  ASSERT_TRUE(mt != MemTagFactory::AbsentTag);
+  EXPECT_TRUE(set.mem_tag_limit(mt)->sz == 1 * M);
+  EXPECT_TRUE(set.mem_tag_limit(mt)->mode == MallocLimitMode::trigger_oom);
+
+  EXPECT_TRUE(set.parse_malloclimit_option("@anotherUserDefinedTag:128k:fatal", &err)) << err;
+  mt = MemTagFactory::tag_or_absent("anotherUserDefinedTag");
+  ASSERT_TRUE(mt != MemTagFactory::AbsentTag);
+  EXPECT_TRUE(set.mem_tag_limit(mt)->sz == 128 * K);
+  EXPECT_TRUE(set.mem_tag_limit(mt)->mode == MallocLimitMode::trigger_fatal);
+
+  EXPECT_TRUE(set.parse_malloclimit_option("class:10M:oom,@thirdUserDefinedTag:128k:fatal,test:5M:fatal", &err)) << err;
+  mt = MemTagFactory::tag_or_absent("thirdUserDefinedTag");
+  ASSERT_TRUE(mt != MemTagFactory::AbsentTag);
+  EXPECT_TRUE(set.mem_tag_limit(mt)->sz == 128 * K);
+  EXPECT_TRUE(set.mem_tag_limit(mt)->mode == MallocLimitMode::trigger_fatal);
+}
+
 
 // Death tests.
 // Majority of MallocLimit functional tests are done via jtreg test runtime/NMT/MallocLimitTest. Here, we just

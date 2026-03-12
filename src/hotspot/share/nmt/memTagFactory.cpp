@@ -23,32 +23,24 @@
  */
 
 #include "utilities/macros.hpp"
-#include "utilities/nativeCallStack.hpp"
 
 #if INCLUDE_JFR
 #include "jfr/recorder/checkpoint/types/jfrType.hpp"
 #endif
 
-#include <nmt/memTagFactory.hpp>
+#include "nmt/memTagFactory.hpp"
+#include "nmt/nmtCommon.hpp"
+#include "utilities/stringUtils.hpp"
 
 DeferredStatic<MemTagFactory::Instance> MemTagFactory::_instance;
-DeferredStatic<MemTagFactory::Iterator> MemTagFactory::_iterator;
 
 uint32_t MemTagFactory::Instance::string_hash(const char* t) const {
   return AltHashing::halfsiphash_32(_seed, t, (int)strlen(t));
 }
 
-void MemTagFactory::Instance::put_if_absent(MemTag tag, const char* name) {
+void MemTagFactory::Instance::put_tag(MemTag tag, const char* name) {
   assert(strlen(name) < 4096, "mustn't be ridiculously long");
   int bucket = string_hash(name) % _table_size;
-  EntryRef link = _table[bucket];
-  while (link != Nil) {
-    Entry e = _entries.at(link);
-    if (strcmp(e.name, name) == 0) {
-      return;
-    }
-    link = e.next;
-  }
   const char* name_copy = os::strdup(name, mtNMT);
   Entry nentry(tag, _table[bucket], name_copy);
   _entries.push(nentry);
@@ -56,16 +48,22 @@ void MemTagFactory::Instance::put_if_absent(MemTag tag, const char* name) {
   AtomicAccess::inc(&_number_of_tags);
 }
 
-MemTag MemTagFactory::Instance::tag_or_absent(const char* name) const {
-  int bucket = string_hash(name) % _table_size;
-  EntryRef link = _table[bucket];
-  while (link != Nil) {
-    Entry e = _entries.at(link);
-    if (strcmp(e.name, name) == 0) {
-      return e.tag;
+MemTag MemTagFactory::Instance::tag_or_absent(const char* name) {
+  int init_bucket = string_hash(name) % _table_size;
+  log_debug(nmt)("looking for tag-name: %s , init-bucket: %d", name, init_bucket);
+  for (int bucket = init_bucket; bucket < init_bucket + _table_size; bucket++) {
+    int idx = bucket % _table_size;
+    EntryRef link = _table[idx];
+    while (link != Nil) {
+      Entry e = _entries.at(link);
+      if (strcmp(e.name, name) == 0) {
+        log_debug(nmt)("found tag-name: %s at bucket: %d, tag: %d", e.name, idx, (int)e.tag);
+        return e.tag;
+      }
+      link = e.next;
     }
-    link = e.next;
   }
+  log_debug(nmt)("tag-name: %s not found", name);
   return AbsentTag;
 }
 
@@ -81,7 +79,7 @@ MemTag MemTagFactory::Instance::tag(const char* name, const char* human_name) {
 
   // No tag found, have to create a new one
   MemTag i = static_cast<MemTag>(_number_of_tags);
-  put_if_absent(i, name);
+  put_tag(i, name);
   if (human_name != nullptr) {
     set_human_readable_name_of(i, human_name);
   }
@@ -93,6 +91,9 @@ MemTag MemTagFactory::Instance::tag(const char* name, const char* human_name) {
 const char* MemTagFactory::Instance::name_of(MemTag tag) const {
   if (index(tag) >= AtomicAccess::load(&_number_of_tags)) {
     return nullptr;
+  }
+  if (tag < MemTag::mtNumberOfEnumTags) {
+    return NMTUtil::tag_to_name(tag);
   }
   return _entries.at(index(tag)).name;
 }
@@ -114,14 +115,13 @@ const char* MemTagFactory::Instance::human_readable_name_of(MemTag tag) const {
 }
 
 MemTagFactory::Instance::Instance()
-    : _entries(), _table_size(nr_of_buckets), _table(nullptr),
-      _human_readable_names(), _seed(5000002429), _number_of_tags(0),
-      _iterator(this) {
+    : _entries(255), _table_size(nr_of_buckets), _table(nullptr),
+      _human_readable_names(), _seed(5000002429), _number_of_tags(0) {
   _table = NEW_C_HEAP_ARRAY(EntryRef, _table_size, mtNMT);
   for (int i = 0; i < _table_size; i++) {
     _table[i] = Nil;
   }
-#define MEMORY_TAG_ADD_TO_TABLE(mem_tag, human_readable) this->tag(human_readable);
+#define MEMORY_TAG_ADD_TO_TABLE(mem_tag, name) this->tag(#mem_tag, name);
 MEMORY_TAG_DO(MEMORY_TAG_ADD_TO_TABLE)
 #undef MEMORY_TAG_ADD_TO_TABLE
 }
@@ -129,25 +129,3 @@ MEMORY_TAG_DO(MEMORY_TAG_ADD_TO_TABLE)
 int MemTagFactory::Instance::number_of_tags() const {
   return AtomicAccess::load(&_number_of_tags);
 }
-
-void MemTagFactory::Iterator::iterate_tags_impl(
-    void (*callback)(void *ctx, const MemTag, const char *, const char *),
-    void *ctx) {
-  using MemTagI = std::underlying_type_t<MemTag>;
-  NmtMemTagLocker ntml;
-  for (MemTagI i = 0; i < (MemTagI)_instance->number_of_tags(); i++) {
-    MemTag memtag = static_cast<MemTag>(i);
-    callback(ctx, memtag, _instance->name_of(memtag),
-             human_readable_name_of(memtag));
-  }
-}
-
-void MemTagFactory::Instance::Iterator::iterate_tags_impl(
-    void (*callback)(void *ctx, const MemTag, const char *, const char *),
-                                                          void *ctx) {
-  for (MemTagI i = 0; i < (MemTagI)_instance->number_of_tags(); i++) {
-    MemTag memtag = static_cast<MemTag>(i);
-    callback(ctx, memtag, _instance->name_of(memtag),
-             _instance->human_readable_name_of(memtag));
-  }
-};

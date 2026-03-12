@@ -49,7 +49,6 @@ static const char* mode_to_name(MallocLimitMode m) {
 }
 
 class ParserHelper {
-  MemTagIterator& _iterator;
   // Start, end of parsed string.
   const char* const _s;
   const char* const _end;
@@ -57,7 +56,7 @@ class ParserHelper {
   const char* _p;
 
 public:
-  ParserHelper(const char* s, MemTagIterator& mts) : _iterator(mts), _s(s), _end(s + strlen(s)), _p(s) {}
+  ParserHelper(const char* s) : _s(s), _end(s + strlen(s)), _p(s) {}
 
   bool eof() const { return _p >= _end; }
 
@@ -91,22 +90,16 @@ public:
     }
     stringStream ss;
     ss.print("%.*s", (int)(end - _p), _p);
-    MemTag out_tag = mtNone;
-
-    auto iter = [&](MemTag tag, const char* name, const char* hrn) {
-      if ((hrn == nullptr ? false : ::strcasecmp(hrn, ss.base()) == 0)      ||
-          ::strcasecmp(name, ss.base()) == 0     ||
-          ((*name != '\0' && name[1] != '\0') ?  ::strcasecmp(name + 2, ss.base()) == 0 : false)
-          ) {
-        out_tag = tag;
-        return false;
-      }
-      return true;
-    };
-    _iterator.iterate_tags(iter);
-
-    if (out_tag != mtNone) {
-      *out = out_tag;
+    MemTag mem_tag = MemTagFactory::AbsentTag;
+    if (ss.base()[0] == '@') { // user defined tag?
+      mem_tag = MemTagFactory::tag(ss.base() + 1); // skip @
+    } else {
+      mem_tag = NMTUtil::string_to_mem_tag(ss.base());
+      mem_tag = mem_tag == mtNone ? MemTagFactory::AbsentTag : mem_tag;
+    }
+    log_info(nmt)("parsing malloc-limit string of '%s', found: %d", ss.base(), (int)mem_tag);
+    if (mem_tag != MemTagFactory::AbsentTag) {
+      *out = mem_tag;
       _p  = end;
       return true;
     }
@@ -137,7 +130,7 @@ public:
   }
 };
 
-MallocLimitSet::MallocLimitSet(MemTagIterator& iter) : _iterator(iter) {
+MallocLimitSet::MallocLimitSet() {
   reset();
 }
 
@@ -185,7 +178,7 @@ bool MallocLimitSet::parse_malloclimit_option(const char* v, const char** err) {
 
   reset();
 
-  ParserHelper sst(v, _iterator);
+  ParserHelper sst(v);
 
   BAIL_UNLESS(!sst.eof(), "Empty string");
 
@@ -238,7 +231,7 @@ void MallocLimitHandler::reset(const char *options) {
 }
 
 void MallocLimitHandler::initialize(const char* options) {
-  _limits.initialize(MemTagFactory::iterator());
+  _limits.initialize();
   reset(options);
 }
 

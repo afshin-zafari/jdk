@@ -29,7 +29,6 @@
 
 #include "memory/allStatic.hpp"
 #include "nmt/memTag.hpp"
-#include "nmt/memTagFactory.hpp"
 #include "utilities/align.hpp"
 #include "utilities/globalDefinitions.hpp"
 
@@ -131,6 +130,13 @@ class NMTUtil : AllStatic {
   // Returns textual representation of a tracking level.
   static const char* tracking_level_to_string(NMT_TrackingLevel level);
 
+ private:
+  struct S {
+    const char* enum_s; // e.g. "mtNMT"
+    const char* human_readable; // e.g. "Native Memory Tracking"
+  };
+  static S _strings[(int)MemTag::mtNumberOfEnumTags];
+  public:
   // The maximum number of tags that NMT can be aware of.
   static constexpr int max_number_of_tags() {
     return std::numeric_limits<std::underlying_type_t<MemTag>>::max();

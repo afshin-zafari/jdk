@@ -24,6 +24,7 @@
 
 #include "jfr/jfrEvents.hpp"
 #include "jfr/periodic/jfrNativeMemoryEvent.hpp"
+#include "nmt/memTagFactory.hpp"
 #include "nmt/memTracker.hpp"
 #include "nmt/nmtCommon.hpp"
 #include "nmt/nmtUsage.hpp"
