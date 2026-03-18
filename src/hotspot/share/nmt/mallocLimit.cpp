@@ -23,13 +23,13 @@
  *
  */
 
+#include "logging/log.hpp"
 #include "nmt/mallocLimit.hpp"
 #include "nmt/memTag.hpp"
 #include "nmt/memTagFactory.hpp"
 #include "nmt/nmtCommon.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/java.hpp"
-#include "logging/log.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/ostream.hpp"
 #include "utilities/parseInteger.hpp"
