@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2025, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2026, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2021, 2023 SAP SE. All rights reserved.
 
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -131,11 +131,6 @@ class NMTUtil : AllStatic {
   static const char* tracking_level_to_string(NMT_TrackingLevel level);
 
  private:
-  struct S {
-    const char* enum_s; // e.g. "mtNMT"
-    const char* human_readable; // e.g. "Native Memory Tracking"
-  };
-  static S _strings[(int)MemTag::mtNumberOfEnumTags];
   public:
   // The maximum number of tags that NMT can be aware of.
   static constexpr int max_number_of_tags() {

@@ -99,6 +99,10 @@ TEST_VM(NMT, MallocLimitPerCategory) {
 }
 
 TEST_VM(NMT, MallocLimitMemTagEnumNames) {
+  if (!MemTracker::enabled()) {
+    tty->print_cr("Skipped");
+    return;
+  }
   MallocLimitSet expected;
 
   stringStream option;
@@ -113,6 +117,10 @@ TEST_VM(NMT, MallocLimitMemTagEnumNames) {
 }
 
 TEST_VM(NMT, MallocLimitAllCategoriesHaveHumanReadableNames) {
+  if (!MemTracker::enabled()) {
+    tty->print_cr("Skipped");
+    return;
+  }
   MallocLimitSet expected;
 
   stringStream option;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2025, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,12 +30,6 @@ STATIC_ASSERT(NMT_off > NMT_unknown);
 STATIC_ASSERT(NMT_summary > NMT_off);
 STATIC_ASSERT(NMT_detail > NMT_summary);
 
-#define MEMORY_TAG_DECLARE_NAME(tag, human_readable) \
-  { #tag, human_readable },
-
-NMTUtil::S NMTUtil::_strings[] = {
-  MEMORY_TAG_DO(MEMORY_TAG_DECLARE_NAME)
-};
 
 const char* NMTUtil::scale_name(size_t scale) {
   switch(scale) {
@@ -88,23 +82,10 @@ NMT_TrackingLevel NMTUtil::parse_tracking_level(const char* s) {
   return NMT_unknown;
 }
 
-MemTag NMTUtil::string_to_mem_tag(const char* s) {
-  for (int i = 0; i < (int)MemTag::mtNumberOfEnumTags; i ++) {
-    assert(::strlen(_strings[i].enum_s) > 2, "Sanity"); // should always start with "mt"
-    if (::strcasecmp(_strings[i].human_readable, s) == 0 ||
-        ::strcasecmp(_strings[i].enum_s, s) == 0 ||
-        ::strcasecmp(_strings[i].enum_s + 2, s) == 0) // "mtXXX" -> match also "XXX" or "xxx"
-    {
-      return (MemTag)i;
-    }
-  }
-  return mtNone;
-}
-
 const char* NMTUtil::tag_to_enum_name(MemTag mem_tag) {
-  return _strings[tag_to_index(mem_tag)].enum_s;
+  return MemTagFactory::enum_name_of(mem_tag);
 }
 
 const char* NMTUtil::tag_to_name(MemTag mem_tag) {
-  return _strings[tag_to_index(mem_tag)].human_readable;
+  return MemTagFactory::human_readable_name_of(mem_tag);
 }

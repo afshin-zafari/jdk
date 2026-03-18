@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,26 +49,25 @@ void MemTagFactory::Instance::put_tag(MemTag tag, const char* name) {
 }
 
 MemTag MemTagFactory::Instance::tag_or_absent(const char* name) {
-  int init_bucket = string_hash(name) % _table_size;
-  log_debug(nmt)("looking for tag-name: %s , init-bucket: %d", name, init_bucket);
-  for (int bucket = init_bucket; bucket < init_bucket + _table_size; bucket++) {
-    int idx = bucket % _table_size;
-    EntryRef link = _table[idx];
-    while (link != Nil) {
-      Entry e = _entries.at(link);
-      if (strcmp(e.name, name) == 0) {
-        log_debug(nmt)("found tag-name: %s at bucket: %d, tag: %d", e.name, idx, (int)e.tag);
-        return e.tag;
-      }
-      link = e.next;
+  int bucket = string_hash(name) % _table_size;
+  EntryRef link = _table[bucket];
+  while (link != Nil) {
+    Entry e = _entries.at(link);
+    if (strcmp(e.name, name) == 0) {
+      return e.tag;
     }
+    link = e.next;
   }
-  log_debug(nmt)("tag-name: %s not found", name);
   return AbsentTag;
 }
 
 MemTag MemTagFactory::Instance::tag(const char* name, const char* human_name) {
-  MemTag found = tag_or_absent(name);
+  MemTag found = AbsentTag;
+  if (is_enum_name(name, &found)) {
+    // If it's an enum tag, return the existing tag
+    return found;
+  }
+  found = tag_or_absent(name);
   if (found != AbsentTag) {
     return found;
   }
@@ -92,8 +91,8 @@ const char* MemTagFactory::Instance::name_of(MemTag tag) const {
   if (index(tag) >= AtomicAccess::load(&_number_of_tags)) {
     return nullptr;
   }
-  if (tag < MemTag::mtNumberOfEnumTags) {
-    return NMTUtil::tag_to_name(tag);
+  if (index(tag) < NMTUtil::number_of_enum_tags()) {
+    return human_readable_name_of(tag);
   }
   return _entries.at(index(tag)).name;
 }
@@ -115,7 +114,7 @@ const char* MemTagFactory::Instance::human_readable_name_of(MemTag tag) const {
 }
 
 MemTagFactory::Instance::Instance()
-    : _entries(255), _table_size(nr_of_buckets), _table(nullptr),
+    : _entries(), _table_size(nr_of_buckets), _table(nullptr),
       _human_readable_names(), _seed(5000002429), _number_of_tags(0) {
   _table = NEW_C_HEAP_ARRAY(EntryRef, _table_size, mtNMT);
   for (int i = 0; i < _table_size; i++) {
@@ -128,4 +127,27 @@ MEMORY_TAG_DO(MEMORY_TAG_ADD_TO_TABLE)
 
 int MemTagFactory::Instance::number_of_tags() const {
   return AtomicAccess::load(&_number_of_tags);
+}
+
+bool MemTagFactory::Instance::is_enum_name(const char* option, MemTag* out) const {
+  for (int i = 0; i < MIN2(NMTUtil::number_of_enum_tags(), _entries.length()); i++) {
+    const char* enum_name = _entries.at(i).name;
+    const char* enum_name_without_mt = enum_name + 2; // skip "mt" prefix
+    const char* hr_name = _human_readable_names.at(i);
+    if (::strcasecmp(hr_name, option) == 0 ||
+        ::strcasecmp(enum_name, option) == 0 ||
+        ::strcasecmp(enum_name_without_mt, option) == 0) {
+      *out = (MemTag)i;
+      return true;
+    }
+  }
+  return false;
+}
+
+const char* MemTagFactory::Instance::enum_name_of(MemTag tag) const {
+  MemTagI i = index(tag);
+  if (i < NMTUtil::number_of_enum_tags()) {
+    return _entries.at(i).name;
+  }
+  return nullptr;
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2023 SAP SE. All rights reserved.
- * Copyright (c) 2023, 2025, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2023, 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@
 #include "nmt/nmtCommon.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/java.hpp"
+#include "logging/log.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/ostream.hpp"
 #include "utilities/parseInteger.hpp"
@@ -91,19 +92,21 @@ public:
     stringStream ss;
     ss.print("%.*s", (int)(end - _p), _p);
     MemTag mem_tag = MemTagFactory::AbsentTag;
-    if (ss.base()[0] == '@') { // user defined tag?
-      mem_tag = MemTagFactory::tag(ss.base() + 1); // skip @
-    } else {
-      mem_tag = NMTUtil::string_to_mem_tag(ss.base());
-      mem_tag = mem_tag == mtNone ? MemTagFactory::AbsentTag : mem_tag;
+    const char* option = ss.base();
+    bool user_defined_tag = option[0] == '@';
+    option = user_defined_tag ? option + 1 : option; // skip @ if user defined tag
+    bool is_enum_tag = MemTagFactory::is_enum_name(option, &mem_tag);
+    if (!user_defined_tag && !is_enum_tag) {
+      log_warning(nmt)("Unknown memory tag '%s' in malloc-limit option", option);
+      return false;
+    }
+    if (user_defined_tag && !is_enum_tag) {
+      mem_tag = MemTagFactory::tag(option);
     }
     log_info(nmt)("parsing malloc-limit string of '%s', found: %d", ss.base(), (int)mem_tag);
-    if (mem_tag != MemTagFactory::AbsentTag) {
-      *out = mem_tag;
-      _p  = end;
-      return true;
-    }
-    return false;
+    *out = mem_tag;
+    _p  = end;
+    return true;
   }
 
   // Check if string at position matches a memory size (e.g. "100", "100g" etc).

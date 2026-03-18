@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,9 +72,9 @@ public:
     volatile int _number_of_tags;
 
     void put_tag(MemTag tag, const char* name);
-    uint32_t string_hash(const char* t) const;
 
   public:
+    uint32_t string_hash(const char* t) const;
     constexpr static const MemTag AbsentTag = static_cast<MemTag>(std::numeric_limits<std::underlying_type_t<MemTag>>::max());
 
     Instance();
@@ -85,6 +85,8 @@ public:
 
     MemTag tag(const char* name, const char* human_name = nullptr);
     void set_human_readable_name_of(MemTag tag, const char* hrn);
+    bool is_enum_name(const char* name, MemTag* out) const;
+    const char* enum_name_of(MemTag tag) const;
   };
 
   static DeferredStatic<Instance> _instance;
@@ -124,6 +126,15 @@ public:
     return _instance->tag_or_absent(name);
   }
 
+  static bool is_enum_name(const char* name, MemTag* out) {
+    NmtMemTagLocker ntml;
+    return _instance->is_enum_name(name, out);
+   }
+
+   static const char* enum_name_of(MemTag tag) {
+     NmtMemTagLocker ntml;
+     return _instance->enum_name_of(tag);
+   }
 };
 
 #endif // SHARE_NMT_MEMTAGFACTORY_HPP

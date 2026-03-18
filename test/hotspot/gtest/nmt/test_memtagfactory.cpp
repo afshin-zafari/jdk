@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,14 @@ TEST(NMTMemTagFactoryTest, CreatingSameTagTwiceGivesSameTag) {
   MemTag t = mtf.tag("a");
   MemTag t2 = mtf.tag("a");
   EXPECT_EQ(t, t2);
+}
+
+TEST(NMTMemTagFactoryTest, CreatingPredefinedTags) {
+  MemTagFactory::Instance mtf;
+  EXPECT_EQ(mtf.tag("mtJavaHeap"), mtJavaHeap);
+  EXPECT_EQ(mtf.tag("Class"), mtClass);
+  EXPECT_EQ(mtf.tag("ClassSHARED"), mtClassShared);
+  EXPECT_EQ(mtf.tag("Arena chunk"), mtChunk);
 }
 
 TEST(NMTMemTagFactoryTest, CanStoreMaxNumberOfTags) {
