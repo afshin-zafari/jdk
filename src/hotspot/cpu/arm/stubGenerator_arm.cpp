@@ -3011,6 +3011,10 @@ class StubGenerator: public StubCodeGenerator {
     // Note:  the disjoint stubs must be generated first, some of
     //        the conjoint stubs use them.
 
+    // Note:   chaining of stubs does not rely on branching to an
+    //         auxiliary post-push entry because none of the stubs
+    //         push/pop a frame.
+
     // these need always status in case they are called from generic_arraycopy
     StubRoutines::_jbyte_disjoint_arraycopy  = generate_primitive_copy(StubId::stubgen_jbyte_disjoint_arraycopy_id);
     StubRoutines::_jshort_disjoint_arraycopy = generate_primitive_copy(StubId::stubgen_jshort_disjoint_arraycopy_id);
@@ -3024,6 +3028,7 @@ class StubGenerator: public StubCodeGenerator {
     StubRoutines::_arrayof_jlong_disjoint_arraycopy  = generate_primitive_copy(StubId::stubgen_arrayof_jlong_disjoint_arraycopy_id);
     StubRoutines::_arrayof_oop_disjoint_arraycopy    = generate_oop_copy      (StubId::stubgen_arrayof_oop_disjoint_arraycopy_id);
 
+    // disjoint copy entry is needed by conjoint copy
     // these need always status in case they are called from generic_arraycopy
     StubRoutines::_jbyte_arraycopy  = generate_primitive_copy(StubId::stubgen_jbyte_arraycopy_id, StubRoutines::_jbyte_disjoint_arraycopy);
     StubRoutines::_jshort_arraycopy = generate_primitive_copy(StubId::stubgen_jshort_arraycopy_id, StubRoutines::_jshort_disjoint_arraycopy);
@@ -3206,7 +3211,7 @@ class StubGenerator: public StubCodeGenerator {
   }
 
  public:
-  StubGenerator(CodeBuffer* code, BlobId blob_id) : StubCodeGenerator(code, blob_id) {
+  StubGenerator(CodeBuffer* code, BlobId blob_id, AOTStubData* stub_data) : StubCodeGenerator(code, blob_id, stub_data) {
     switch(blob_id) {
     case BlobId::stubgen_preuniverse_id:
       generate_preuniverse_stubs();
@@ -3230,8 +3235,8 @@ class StubGenerator: public StubCodeGenerator {
   }
 }; // end class declaration
 
-void StubGenerator_generate(CodeBuffer* code, BlobId blob_id) {
-  StubGenerator g(code, blob_id);
+void StubGenerator_generate(CodeBuffer* code, BlobId blob_id, AOTStubData* stub_data) {
+  StubGenerator g(code, blob_id, stub_data);
 }
 
 // implementation of internal development flag
